@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2018, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -228,9 +228,6 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
           if(operation->next) {
             /* Initialise the newly created config */
             config_init(operation->next);
-
-            /* Copy the easy handle */
-            operation->next->easy = global->easy;
 
             /* Set the global config pointer */
             operation->next->global = global;
