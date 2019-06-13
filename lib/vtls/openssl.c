@@ -60,6 +60,10 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/pkcs12.h>
+#ifdef USE_ESNI
+#include <openssl/esni.h>
+#include <openssl/esnierr.h>
+#endif /* USE_ESNI */
 
 #ifdef USE_AMISSL
 #include "amigaos.h"
