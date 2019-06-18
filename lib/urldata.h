@@ -272,6 +272,10 @@ struct curl_ssl_session {
 #include "curl_sspi.h"
 #endif
 
+#ifdef USE_ESNI
+#include "esni.h"
+#endif
+
 /* Struct used for Digest challenge-response authentication */
 struct digestdata {
 #if defined(USE_WINDOWS_SSPI)
@@ -1824,6 +1828,9 @@ struct Curl_easy {
                                   is to be used or not. */
 #ifdef USE_ALTSVC
   struct altsvcinfo *asi;      /* the alt-svc cache */
+#endif
+#ifdef USE_ESNI
+  struct ESNIstate *esni;      /* the ESNI data */
 #endif
   struct Progress progress;    /* for all the progress meter data */
   struct UrlState state;       /* struct for fields used for state info and
