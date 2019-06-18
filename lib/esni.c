@@ -21,7 +21,7 @@
  ***************************************************************************/
 #include "curl_setup.h"
 
-#ifdef(USE_ESNI)
+#ifdef USE_ESNI
 #include <curl/curl.h>
 #include "urldata.h"
 #include "esni.h"
@@ -48,3 +48,5 @@ static struct ESNIstate *esni_init(void)
 
   return esni;
 }
+
+#endif  /* USE_ESNI */
