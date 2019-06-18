@@ -35,8 +35,8 @@ struct ESNIstate {
   char *asciirr;
 };
 
-static void esni_free(struct ESNIstate *esni);
-static struct ESNIstate *esni_init(void);
+void esni_free(struct ESNIstate *esni);
+struct ESNIstate *esni_init(void);
 
 #else  /* ESNI not in use */
 #endif  /* USE_ESNI */
