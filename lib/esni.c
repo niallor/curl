@@ -31,7 +31,7 @@
 #include "curl_memory.h"
 #include "memdebug.h"
 
-static void esni_free(struct ESNIstate *esni)
+void esni_free(struct ESNIstate *esni)
 {
   free(esni->encservername);
   free(esni->servername);
@@ -40,7 +40,7 @@ static void esni_free(struct ESNIstate *esni)
   free(esni);
 }
 
-static struct ESNIstate *esni_init(void)
+struct ESNIstate *esni_init(void)
 {
   struct ESNIstate *esni = calloc(1, sizeof(struct ESNIstate));
   if(!esni)
