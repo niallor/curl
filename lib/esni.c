@@ -1,5 +1,3 @@
-#ifndef HEADER_CURL_ESNI_H
-#define HEADER_CURL_ESNI_H
 /***************************************************************************
  *                                  _   _ ____  _
  *  Project                     ___| | | |  _ \| |
@@ -20,25 +18,33 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- *
  ***************************************************************************/
 #include "curl_setup.h"
 
-#ifdef USE_ESNI
-# include <curl/curl.h>
+#ifdef(USE_ESNI)
+#include <curl/curl.h>
+#include "urldata.h"
+#include "esni.h"
 
-/* Struct to hold ESNI data, referenced by current struct Curl_easy */
-struct ESNIstate {
-  char *encservername;
-  char *servername;
-  char *public_name;
-  char *asciirr;
-};
+/* The last 3 #include files should be in this order */
+#include "curl_printf.h"
+#include "curl_memory.h"
+#include "memdebug.h"
 
-static void esni_free(struct ESNIstate *esni);
-static struct ESNIstate *esni_init(void);
+static void esni_free(struct ESNIstate *esni)
+{
+  free(esni->encservername);
+  free(esni->servername);
+  free(esni->public_name);
+  free(esni->asciirr);
+  free(esni);
+}
 
-#else  /* ESNI not in use */
-#endif  /* USE_ESNI */
+static struct ESNIstate *esni_init(void)
+{
+  struct ESNIstate *esni = calloc(1, sizeof(struct ESNIstate));
+  if (!esni)
+    return NULL;
 
-#endif  /* HEADER_CURL_ESNI_H */
+  return esni;
+}
