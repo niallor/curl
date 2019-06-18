@@ -43,7 +43,7 @@ static void esni_free(struct ESNIstate *esni)
 static struct ESNIstate *esni_init(void)
 {
   struct ESNIstate *esni = calloc(1, sizeof(struct ESNIstate));
-  if (!esni)
+  if(!esni)
     return NULL;
 
   return esni;
