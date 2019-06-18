@@ -122,6 +122,7 @@ bool curl_win32_idn_to_ascii(const char *in, char **out);
 #include "strdup.h"
 #include "setopt.h"
 #include "altsvc.h"
+#include "esni.h"
 
 /* The last 3 #include files should be in this order */
 #include "curl_printf.h"
@@ -380,6 +381,10 @@ CURLcode Curl_close(struct Curl_easy *data)
   Curl_altsvc_save(data->asi, data->set.str[STRING_ALTSVC]);
   Curl_altsvc_cleanup(data->asi);
   data->asi = NULL;
+#endif
+#ifdef USE_ESNI
+  esni_free(data->esni);
+  data->esni = NULL;
 #endif
 #if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_CRYPTO_AUTH)
   Curl_http_auth_cleanup_digest(data);
