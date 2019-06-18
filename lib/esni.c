@@ -33,11 +33,13 @@
 
 void esni_free(struct ESNIstate *esni)
 {
-  free(esni->encservername);
-  free(esni->servername);
-  free(esni->public_name);
-  free(esni->asciirr);
-  free(esni);
+  if(esni) {
+    free(esni->encservername);
+    free(esni->servername);
+    free(esni->public_name);
+    free(esni->asciirr);
+    free(esni);
+  }
 }
 
 struct ESNIstate *esni_init(void)
