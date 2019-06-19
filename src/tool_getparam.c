@@ -274,6 +274,8 @@ static const struct LongShort aliases[]= {
           * for ESNI-related short names as any. */
   {"ET", "esni-cover",               ARG_STRING},
   {"EU", "esni-load",                ARG_FILENAME},
+  {"EV", "esni-server",              ARG_STRING},
+  {"EW", "strict-esni",              ARG_BOOL},
 #endif
   {"f",  "fail",                     ARG_BOOL},
   {"fa", "fail-early",               ARG_BOOL},
@@ -1724,6 +1726,22 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
         if(!config->esni_status.flags.disabled) {
           config->esni_status.flags.selected = TRUE; /* as before */
           GetStr(&config->esni_load_file, nextarg);
+        }
+        break;
+
+      case 'V':
+        /* --esni-server ARG_STRING */
+        if(!config->esni_status.flags.disabled) {
+          config->esni_status.flags.selected = TRUE; /* as before */
+          GetStr(&config->esni_server_name, nextarg);
+        }
+        break;
+
+      case 'W':
+        /* --strict-esni ARG_BOOL */
+        if(!config->esni_status.flags.disabled) {
+          config->esni_status.flags.selected = TRUE; /* as before */
+          config->esni_status.flags.relaxed = !toggle;
         }
         break;
 #endif
