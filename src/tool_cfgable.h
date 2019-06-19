@@ -275,7 +275,8 @@ struct OperationConfig {
   char *esni_cover_name;          /* Set by --esni-cover option */
   char *esni_load_file;           /* Set by --esni-load option */
   char *esni_server_name;         /* Set by --esni-server option */
-  SSL_ESNI *ssl_esni;             /* TODO: determine whether this is needed here */
+  SSL_ESNI *ssl_esni;             /* TODO:
+                                     decide whether this is needed here */
 #endif
   struct GlobalConfig *global;
   struct OperationConfig *prev;

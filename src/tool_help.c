@@ -427,7 +427,7 @@ static const struct helptxt helptext[] = {
   {"    --esni-server <domain name>",
    "Specify server where target URL is hosted"},
   {"    --strict-esni",
-   "Disable (using --no-strict-esni) check that server cert matches specified ESNI name"},
+   "Specify whether to insist that server cert match ESNI name"},
 #endif
   {"-Y, --speed-limit <speed>",
    "Stop transfers slower than this"},
