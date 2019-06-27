@@ -273,7 +273,9 @@ struct OperationConfig {
     } flags;
   } esni_status;
   char *esni_cover_name;          /* Set by --esni-cover option */
-  char *esni_load_file;           /* Set by --esni-load option */
+  char *esni_load_file;           /* Filename, set by --esni-load option */
+  char *esni_load_data;           /* ESNI RDATA as base64 or hex string,
+                                   * set by --esni-load option */
   char *esni_server_name;         /* Set by --esni-server option */
   SSL_ESNI *ssl_esni;             /* TODO:
                                      decide whether this is needed here */
