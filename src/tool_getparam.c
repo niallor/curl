@@ -1726,6 +1726,22 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
         if(!config->esni_status.flags.disabled) {
           config->esni_status.flags.selected = TRUE; /* as before */
           GetStr(&config->esni_load_file, nextarg);
+          {
+            FILE *file;
+            file = fopen(nextarg, FOPEN_READTEXT);
+            if(!file)
+              warnf(global,
+                    "Couldn't read file \"%s\" "
+                    "specified for \"--esni-load\" option",
+                    nextarg);
+            else {
+              err = file2string(&config->esni_load_data, file);
+              if(file && (file != stdin))
+                fclose(file);
+              if(err)
+                return err;
+            }
+          }
         }
         break;
 
