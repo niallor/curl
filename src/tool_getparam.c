@@ -1729,11 +1729,12 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
           {
             FILE *file;
             file = fopen(nextarg, FOPEN_READTEXT);
-            if(!file)
+            if(!file) {
               warnf(global,
                     "Couldn't read file \"%s\" "
                     "specified for \"--esni-load\" option",
                     nextarg);
+              return PARAM_BAD_USE;
             else {
               err = file2string(&config->esni_load_data, file);
               if(file && (file != stdin))
