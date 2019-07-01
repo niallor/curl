@@ -28,12 +28,7 @@
 # include <curl/curl.h>
 
 /* Struct to hold ESNI data, referenced by current struct Curl_easy */
-struct ESNIstate {
-  char *encservername;
-  char *servername;
-  char *public_name;
-  char *asciirr;
-};
+struct ESNIstate;               /* Avoid exposing the innards */
 
 void esni_free(struct ESNIstate *esni);
 struct ESNIstate *esni_init(void);
