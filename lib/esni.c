@@ -31,6 +31,17 @@
 #include "curl_memory.h"
 #include "memdebug.h"
 
+/* Struct to hold ESNI data, referenced from struct Curl_easy */
+struct ESNIstate {
+  char *encservername;          /* To be used as value of ESNI option */
+  char *servername;             /* Name of host for connecting to */
+  char *public_name;            /* To be used as value of SNI option */
+  char *asciirr;                /* ESNI (formatted as continuous hex) or
+                                 * TXT (formatted as base64 with semicolon
+                                 *      separators) RRset
+                                 */
+};
+
 void esni_free(struct ESNIstate *esni)
 {
   if(esni) {
