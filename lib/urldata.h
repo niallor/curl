@@ -1507,6 +1507,11 @@ enum dupstring {
 #ifdef USE_ALTSVC
   STRING_ALTSVC,                /* CURLOPT_ALTSVC */
 #endif
+#ifdef USE_ESNI
+  STRING_ESNI_SERVER,           /* CURLOPT_ESNI_SERVER */
+  STRING_ESNI_COVER,            /* CURLOPT_ESNI_COVER */
+  STRING_ESNI_ASCIIRR,          /* CURLOPT_ESNI_ASCIIRR */
+#endif
   /* -- end of zero-terminated strings -- */
 
   STRING_LASTZEROTERMINATED,
