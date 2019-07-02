@@ -37,6 +37,10 @@
 #  include <proto/dos.h>
 #endif
 
+#ifdef USE_ESNI
+#  include "esni.h"
+#endif
+
 #include "strcase.h"
 
 #define ENABLE_CURLX_PRINTF
