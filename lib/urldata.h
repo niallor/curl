@@ -1511,6 +1511,11 @@ enum dupstring {
 #ifndef CURL_DISABLE_PROXY
   STRING_TEMP_URL,              /* temp URL storage for proxy use */
 #endif
+#ifdef USE_ESNI
+  STRING_ESNI_SERVER,           /* CURLOPT_ESNI_SERVER */
+  STRING_ESNI_COVER,            /* CURLOPT_ESNI_COVER */
+  STRING_ESNI_ASCIIRR,          /* CURLOPT_ESNI_ASCIIRR */
+#endif
   /* -- end of zero-terminated strings -- */
 
   STRING_LASTZEROTERMINATED,
