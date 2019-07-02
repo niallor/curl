@@ -272,6 +272,7 @@ struct curl_ssl_session {
 #include "curl_sspi.h"
 #endif
 
+/* TODO: strip if actually redundant here */
 #ifdef USE_ESNI
 #include "esni.h"
 #endif
@@ -1830,6 +1831,7 @@ struct Curl_easy {
   struct altsvcinfo *asi;      /* the alt-svc cache */
 #endif
 #ifdef USE_ESNI
+  /* TODO: strip if actually redundant here */
   struct ESNIstate *esni;      /* the ESNI data */
 #endif
   struct Progress progress;    /* for all the progress meter data */
