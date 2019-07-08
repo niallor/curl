@@ -465,6 +465,9 @@ struct ConnectBits {
   bit tls_enable_alpn:1; /* TLS ALPN extension? */
   bit socksproxy_connecting:1; /* connecting through a socks proxy */
   bit connect_only:1;
+#ifdef USE_ESNI
+  bit tls_enable_esni:1;        /* TLS ESNI extension? */
+#endif
 };
 
 struct hostname {
