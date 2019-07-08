@@ -1707,6 +1707,10 @@ static CURLcode verifystatus(struct connectdata *conn,
   X509_STORE     *st = NULL;
   STACK_OF(X509) *ch = NULL;
 
+  /* TODO:
+   * consider (also) handling of OCSP extension as model for ESNI
+   */
+
   long len = SSL_get_tlsext_status_ocsp_resp(BACKEND->handle, &status);
 
   if(!status) {
@@ -2889,6 +2893,12 @@ static CURLcode ossl_connect_step2(struct connectdata *conn, int sockindex)
     infof(data, "SSL connection using %s / %s\n",
           get_ssl_version_txt(BACKEND->handle),
           SSL_get_cipher(BACKEND->handle));
+
+    /*
+     * TODO:
+     * consider following code for ALPN as model for ESNI
+     * need to find out more about SSL_get0_alpn_selected()
+     */
 
 #ifdef HAS_ALPN
     /* Sets data and len to negotiated protocol, len is 0 if no protocol was
