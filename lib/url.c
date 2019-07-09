@@ -542,6 +542,13 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
   set->tcp_nodelay = TRUE;
   set->ssl_enable_npn = TRUE;
   set->ssl_enable_alpn = TRUE;
+#ifdef USE_ESNI
+  /* TODO:
+   * check whether this is the right place
+   * and what this bit should depend on
+   */
+  set->ssl_enable_esni = TRUE;
+#endif
   set->expect_100_timeout = 1000L; /* Wait for a second by default. */
   set->sep_headers = TRUE; /* separated header lists by default */
   set->buffer_size = READBUFFER_SIZE;
