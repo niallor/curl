@@ -3808,7 +3808,8 @@ static CURLcode create_conn(struct Curl_easy *data,
 
     /*
      * TODO: consider this might be a good place to do some ESNI stuff
-     * maybe by setting a flag to enable ESNI option later like ALPN stuff below
+     * maybe by setting a flag to enable ESNI option later like ALPN
+     * stuff below
      */
 
     if(conn->handler->flags & PROTOPT_ALPN_NPN) {
