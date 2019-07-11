@@ -467,7 +467,13 @@ struct ConnectBits {
   bit socksproxy_connecting:1; /* connecting through a socks proxy */
   bit connect_only:1;
 #ifdef USE_ESNI
+  /*
+   *  TODO: decide whether here, in UserDefined, or in both. We'll do
+   *  both, to allow distinguishing between parameter and state, and
+   *  review afterwards.
+   */
   bit tls_enable_esni:1;        /* TLS ESNI extension? */
+  bit tls_strict_esni:1;        /* TLS ESNI extension: strict checking? */
 #endif
 };
 
@@ -1778,6 +1784,7 @@ struct UserDefined {
   bit http09_allowed:1; /* allow HTTP/0.9 responses */
 #ifdef USE_ESNI
   bit ssl_enable_esni:1;        /* TLS ESNI extension */
+  bit ssl_strict_esni:1;        /* TLS ESNI extension: strict checking */
 #endif
 };
 
