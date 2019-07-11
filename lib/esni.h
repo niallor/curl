@@ -41,6 +41,7 @@ struct ESNIstate {
 
 void esni_free(struct ESNIstate *esni);
 struct ESNIstate *esni_init(void);
+static bool ssl_esni_check(struct Curl_easy *data); /* TODO: why static? */
 
 #else  /* ESNI not in use */
 #endif  /* USE_ESNI */
