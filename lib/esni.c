@@ -51,13 +51,13 @@ struct ESNIstate *esni_init(void)
   return esni;
 }
 
-static bool ssl_esni_check(struct Curl_easy *data)
+bool ssl_esni_check(struct Curl_easy *data)
 {
   /* Check for consistency and completeness of ESNI options */
 
   /* TODO: in verbose mode, display what's been specified */
 
-  if (!data->set.ssl_enable_esni) {
+  if(!data->set.ssl_enable_esni) {
     /* TODO: ASSERT other ESNI options not set, but ignore for now */
     return TRUE;                /* Not requested: definitely good */
   }
