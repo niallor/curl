@@ -1723,10 +1723,10 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
         if(!config->esni_status.flags.disabled) {
           config->esni_status.flags.selected = TRUE; /* as before */
           {
+            FILE *file;
             char *filearg = nextarg;
             if(*filearg++ == '@') {
               GetStr(&config->esni_load_file, filearg);
-              FILE *file;
               file = fopen(filearg, FOPEN_READTEXT);
               if(!file) {
                 warnf(global,
