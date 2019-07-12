@@ -70,6 +70,10 @@ bool ssl_esni_check(struct Curl_easy *data)
         (data->set.ssl_strict_esni ? "SET" : "CLEAR")
         );
 
+  warnf(data->global, "Checking of ESNI options is not yet implemented\n");
+  warnf(data->global, "Assuming all are good and returning TRUE\n");
+  return TRUE;
+
   return FALSE;
 }
 
