@@ -2757,7 +2757,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     arg = va_arg(param, long);
     if(arg < 0 || arg > 1)
       return CURLE_BAD_FUNCTION_ARGUMENT;
-    data->set.ssl_enable_esni = arg;
+    data->set.ssl_enable_esni = (bool) arg;
     break;
 #endif
   default:
