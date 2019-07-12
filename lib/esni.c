@@ -57,10 +57,14 @@ bool ssl_esni_check(struct Curl_easy *data)
 
   /* TODO: in verbose mode, display what's been specified */
 
+  infof(data, "Entering ssl_esni_check\n");
+
   if(!data->set.ssl_enable_esni) {
     /* TODO: ASSERT other ESNI options not set, but ignore for now */
+    infof(data, "found flag CLEAR: ssl_enable_esni\n");
     return TRUE;                /* Not requested: definitely good */
   }
+  infof(data, "found flag SET: ssl_enable_esni\n");
 
   return FALSE;
 }
