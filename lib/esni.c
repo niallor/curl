@@ -72,11 +72,11 @@ bool ssl_esni_check(struct Curl_easy *data)
 
   infof(data, "  checking of ESNI options is not yet implemented\n");
   infof(data, "  assuming that nothing is amiss\n");
-  infof(data, "Returning TRUE from ssl_esni_check\n");
+  infof(data, "Returning from ssl_esni_check with result TRUE\n");
   return TRUE;
 
   /* No reason to return TRUE yet, so go with FALSE */
-  infof(data, "Returning FALSE from ssl_esni_check\n");
+  infof(data, "Returning from ssl_esni_check with result FALSE\n");
   return FALSE;
 }
 
