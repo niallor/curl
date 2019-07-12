@@ -652,6 +652,9 @@ CURLOPT_ESNI_STATUS             DUMMY
 CURLOPT_ESNI_SERVER             DUMMY
 CURLOPT_ESNI_COVER              DUMMY
 CURLOPT_ESNI_ASCIIRR            DUMMY
+CURLESNI_ENABLE                 DUMMY
+CURLESNI_INVALID                DUMMY
+CURLESNI_STRICT                 DUMMY
 CURLPAUSE_ALL                   7.18.0
 CURLPAUSE_CONT                  7.18.0
 CURLPAUSE_RECV                  7.18.0
