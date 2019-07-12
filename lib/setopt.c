@@ -2755,8 +2755,8 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
 #ifdef USE_ESNI
   case CURLOPT_ESNI_STATUS:
     arg = va_arg(param, long);
-    if(arg & CURLESNI_INVALID)
-      return CURLE_BAD_FUNCTION_ARGUMENT;
+    if(arg & CURLESNI_INVALID)            /* Unused flag bits */
+      return CURLE_BAD_FUNCTION_ARGUMENT; /* MUST be zero */
     if(arg & CURLESNI_ENABLE) {
       data->set.ssl_enable_esni = TRUE;
       data->set.ssl_strict_esni = (bool) (arg & CURLESNI_STRICT);
