@@ -922,6 +922,11 @@ typedef enum {
 #define CURLPROTO_SMBS   (1<<27)
 #define CURLPROTO_ALL    (~0) /* enable everything */
 
+/* CURLESNI_ defines are for the CURLOPT_ESNI_STATUS option */
+#define CURLESNI_ENABLE     (1<<0)
+#define CURLESNI_STRICT     (1<<1)
+#define CURLESNI_INVALID ((~0)<<2) /* unused bits: everything else */
+
 /* long may be 32 or 64 bits, but we should never depend on anything else
    but 32 */
 #define CURLOPTTYPE_LONG          0
