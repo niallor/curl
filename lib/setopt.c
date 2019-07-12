@@ -2739,6 +2739,14 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
       return result;
     break;
 #endif
+#ifdef USE_ESNI
+  case CURLOPT_ESNI_STATUS:
+    arg = va_arg(param, long);
+    if(arg < 0 || arg > 1)
+      return CURLE_BAD_FUNCTION_ARGUMENT;
+    data->set.ssl_enable_esni = arg;
+    break;
+#endif
   default:
     /* unknown tag and its companion, just ignore: */
     result = CURLE_UNKNOWN_OPTION;
