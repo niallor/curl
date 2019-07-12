@@ -24,6 +24,7 @@
 #ifdef USE_ESNI
 #include <curl/curl.h>
 #include "urldata.h"
+#include "sendf.h"
 #include "esni.h"
 
 /* The last 3 #include files should be in this order */
