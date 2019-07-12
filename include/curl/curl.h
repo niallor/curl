@@ -926,6 +926,10 @@ typedef enum {
 /* bitmask defines for CURLOPT_H3 */
 #define CURLH3_DIRECT (1<<0) /* go QUIC + HTTP/3 directly to the given host +
                                 port */
+/* CURLESNI_ defines are for the CURLOPT_ESNI_STATUS option */
+#define CURLESNI_ENABLE     (1<<0)
+#define CURLESNI_STRICT     (1<<1)
+#define CURLESNI_INVALID ((~0)<<2) /* unused bits: everything else */
 
 /* long may be 32 or 64 bits, but we should never depend on anything else
    but 32 */
