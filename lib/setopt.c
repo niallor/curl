@@ -2742,9 +2742,30 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
 #ifdef USE_ESNI
   case CURLOPT_ESNI_STATUS:
     arg = va_arg(param, long);
-    if(arg < 0 || arg > 1)
+    if(arg & CURLESNI_INVALID)
       return CURLE_BAD_FUNCTION_ARGUMENT;
-    data->set.ssl_enable_esni = (bool) arg;
+    if(arg & CURLESNI_ENABLE) {
+      data->set.ssl_enable_esni = TRUE;
+      data->set.ssl_strict_esni = (bool) (arg & CURLESNI_STRICT);
+    }
+    break;
+  case CURLOPT_ESNI_SERVER:
+    argptr = va_arg(param, char *);
+    result = Curl_setstropt(&data->set.str[STRING_ESNI_SERVER], argptr);
+    if(result)
+      return result;
+    break;
+  case CURLOPT_ESNI_COVER:
+    argptr = va_arg(param, char *);
+    result = Curl_setstropt(&data->set.str[STRING_ESNI_COVER], argptr);
+    if(result)
+      return result;
+    break;
+  case CURLOPT_ESNI_ASCIIRR:
+    argptr = va_arg(param, char *);
+    result = Curl_setstropt(&data->set.str[STRING_ESNI_ASCIIRR], argptr);
+    if(result)
+      return result;
     break;
 #endif
   default:
