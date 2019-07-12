@@ -62,15 +62,15 @@ bool ssl_esni_check(struct Curl_easy *data)
 
   if(!data->set.ssl_enable_esni) {
     /* TODO: ASSERT other ESNI options not set, but ignore for now */
-    infof(data, "  found flag ssl_enable_esni CLEAR\n");
+    infof(data, "  found flag ssl_enable_esni (CLEAR)\n");
     return TRUE;                /* Not requested: definitely good */
   }
 
   /* Came this far, so ssl_enable_esni must be set */
-  infof(data, "  found flag ssl_enable_esni SET\n");
+  infof(data, "  found flag ssl_enable_esni (SET)\n");
 
   infof(data, "  found flag ssl_strict_esni %s\n",
-        (data->set.ssl_strict_esni ? "SET" : "CLEAR")
+        (data->set.ssl_strict_esni ? "(SET)" : "(CLEAR)")
         );
 
   if(data->set.str[STRING_ESNI_SERVER])
