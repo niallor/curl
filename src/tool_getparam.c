@@ -1723,25 +1723,32 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
 
       case 'U':
         /* --esni-load */
+        /* Allow string data or "@"-escaped filename */
         if(!config->esni_status.flags.disabled) {
           config->esni_status.flags.selected = TRUE; /* as before */
-          GetStr(&config->esni_load_file, nextarg);
           {
-            FILE *file;
-            file = fopen(nextarg, FOPEN_READTEXT);
-            if(!file) {
-              warnf(global,
-                    "Couldn't read file \"%s\" "
-                    "specified for \"--esni-load\" option",
-                    nextarg);
-              return PARAM_BAD_USE;
+            char *filearg = nextarg;
+            if(*filearg++ == '@') {
+              GetStr(&config->esni_load_file, filearg);
+              FILE *file;
+              file = fopen(filearg, FOPEN_READTEXT);
+              if(!file) {
+                warnf(global,
+                      "Couldn't read file \"%s\" "
+                      "specified for \"--esni-load\" option",
+                      filearg);
+                return PARAM_BAD_USE;
+              }
+              else {
+                err = file2string(&config->esni_load_data, file);
+                if(file && (file != stdin))
+                  fclose(file);
+                if(err)
+                  return err;
+              }
             }
             else {
-              err = file2string(&config->esni_load_data, file);
-              if(file && (file != stdin))
-                fclose(file);
-              if(err)
-                return err;
+              GetStr(&config->esni_load_data, nextarg);
             }
           }
         }
