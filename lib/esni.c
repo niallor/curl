@@ -69,6 +69,7 @@ bool ssl_esni_check(struct Curl_easy *data)
 {
   /* Check for consistency and completeness of ESNI options */
 
+  bool result;
   SSL_ESNI *esnikeys = NULL;    /* Handle for struct holding ESNI data */
   int nesnis = 0;               /* Count of ESNI keys */
   const char *asciirr = data->set.str[STRING_ESNI_ASCIIRR];
@@ -110,18 +111,23 @@ bool ssl_esni_check(struct Curl_easy *data)
                                         ESNI_RRFMT_GUESS,
                                         strlen(asciirr), asciirr,
                                         &nesnis);
-    if(!nesnis || !esnikeys) {
+    if((!nesnis) || (!esnikeys)) {
+      result = FALSE;           /* Save for after housekeeping */
       infof(data, "  invalid STRING_ESNI_ASCIIRR\n");
-      return FALSE;
     }
-
-    infof(data, "  parsed STRING_ESNI_ASCIIRR; found %d key%s\n",
-          nesnis, (nesnis == 1) ? "" : "s"
-          );
-    /* Discard esnikeys immediately; we're only testing for now */
-    SSL_ESNI_free(esnikeys);
-    OPENSSL_free(esnikeys);
-    esnikeys = NULL;
+    else {
+      result = TRUE;            /* Save for after housekeeping */
+      infof(data, "  parsed STRING_ESNI_ASCIIRR; found %d key%s\n",
+            nesnis, (nesnis == 1) ? "" : "s"
+            );
+    }
+    /* Always do housekeeping -- we're only testing for now */
+    if(esnikeys) {
+      SSL_ESNI_free(esnikeys);
+      OPENSSL_free(esnikeys);
+      esnikeys = NULL;
+    }
+    return result;              /* Saved value */
   }
   else {
     infof(data, "  missing STRING_ESNI_ASCIIRR\n");
@@ -133,9 +139,6 @@ bool ssl_esni_check(struct Curl_easy *data)
   infof(data, "Returning from ssl_esni_check with result TRUE\n");
   return TRUE;
 
-  /* No reason to return TRUE yet, so go with FALSE */
-  infof(data, "Returning from ssl_esni_check with result FALSE\n");
-  return FALSE;
 }
 
 #endif  /* USE_ESNI */
