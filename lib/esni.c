@@ -19,6 +19,18 @@
  * KIND, either express or implied.
  *
  ***************************************************************************/
+
+/***************************************************************************
+ * TODO:
+ *
+ * Consider whether this source file is appropriate, as ESNI support
+ * may better belong in relevant backend-specific source which, by
+ * convention, MAY ONLY BE lib/vtls/openssl.c for OpenSSL.
+ *
+ * Non-backend-specific ESNI support code, if ever there be any, may
+ * well belong here.
+ ***************************************************************************/
+
 #include "curl_setup.h"
 
 #ifdef USE_ESNI
@@ -56,7 +68,8 @@ bool ssl_esni_check(struct Curl_easy *data)
 {
   /* Check for consistency and completeness of ESNI options */
 
-  /* TODO: in verbose mode, display what's been specified */
+  SSL_ESNI *esnikeys = NULL;    /* Handle for struct holding ESNI key data */
+  int nesnis = 0;               /* Count of ESNI keys */
 
   infof(data, "Entering ssl_esni_check\n");
 
@@ -77,19 +90,28 @@ bool ssl_esni_check(struct Curl_easy *data)
     infof(data, "  found STRING_ESNI_SERVER (%s)\n",
           data->set.str[STRING_ESNI_SERVER]);
   else
+    /* We can live with this */
     infof(data, "  missing STRING_ESNI_SERVER\n");
 
   if(data->set.str[STRING_ESNI_COVER])
     infof(data, "  found STRING_ESNI_COVER (%s)\n",
           data->set.str[STRING_ESNI_COVER]);
   else
+    /* We can live with this */
     infof(data, "  missing STRING_ESNI_COVER\n");
 
-  if(data->set.str[STRING_ESNI_ASCIIRR])
+  if(data->set.str[STRING_ESNI_ASCIIRR]) {
     infof(data, "  found STRING_ESNI_ASCIIRR (%s)\n",
           data->set.str[STRING_ESNI_ASCIIRR]);
-  else
+    /* TODO:
+     * parse string with SSL_ESNI_new_from_buffer() here
+     * end signal error if necessary
+     */
+  }
+  else {
     infof(data, "  missing STRING_ESNI_ASCIIRR\n");
+    return FALSE;               /* Signal an ERROR */
+  }
 
   infof(data, "  checking of ESNI options is not yet implemented\n");
   infof(data, "  assuming that nothing is amiss\n");
