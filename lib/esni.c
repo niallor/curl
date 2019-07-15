@@ -109,7 +109,7 @@ bool ssl_esni_check(struct Curl_easy *data)
     infof(data, "  found STRING_ESNI_ASCIIRR (%s)\n",
           data->set.str[STRING_ESNI_ASCIIRR]);
 
-    ascirrlen = strlen(ascirr);
+    asciirrlen = strlen(asciirr);
     esnikeys = SSL_ESNI_new_from_buffer(
                                         ESNI_RRFMT_GUESS,
                                         asciirrlen, asciirr,
