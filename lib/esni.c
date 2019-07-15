@@ -115,7 +115,7 @@ bool ssl_esni_check(struct Curl_easy *data)
       return FALSE;
     }
 
-    infof(data, "  parsed STRING_ESNI_ASCIIRR; found %d key%s\n"
+    infof(data, "  parsed STRING_ESNI_ASCIIRR; found %d key%s\n",
           nesnis, (nesnis == 1) : "" "s"
           );
     /* Discard esnikeys immediately; we're only testing for now */
