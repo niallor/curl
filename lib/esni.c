@@ -35,6 +35,7 @@
 
 #ifdef USE_ESNI
 #include <curl/curl.h>
+#include <openssl/esni.h>
 #include "urldata.h"
 #include "sendf.h"
 #include "esni.h"
