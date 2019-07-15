@@ -73,7 +73,9 @@ bool ssl_esni_check(struct Curl_easy *data)
   size_t asciirrlen;
   SSL_ESNI *esnikeys = NULL;    /* Handle for struct holding ESNI data */
   int nesnis = 0;               /* Count of ESNI keys */
-  const char *asciirr = data->set.str[STRING_ESNI_ASCIIRR];
+
+  /* Copy string pointer so line-length conforms to style 8-) */
+  char *asciirr = data->set.str[STRING_ESNI_ASCIIRR];
 
   infof(data, "Entering ssl_esni_check\n");
 
