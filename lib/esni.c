@@ -111,6 +111,10 @@ bool ssl_esni_check(struct Curl_easy *data)
                                         ESNI_RRFMT_GUESS,
                                         strlen(asciirr), asciirr,
                                         &nesnis);
+
+    infof(data, "  found nesnis (%d)\n", nesnis);
+    infof(data, "  found esnikeys handle (%lh)\n", esnikeys);
+
     if((!nesnis) || (!esnikeys)) {
       result = FALSE;           /* Save for after housekeeping */
       infof(data, "  invalid STRING_ESNI_ASCIIRR\n");
