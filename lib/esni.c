@@ -110,7 +110,7 @@ bool ssl_esni_check(struct Curl_easy *data)
                                         ESNI_RRFMT_GUESS,
                                         strlen(asciirr), asciirr,
                                         &nesnis);
-    if (nesnis==0 || esnikeys == NULL) {
+    if(nesnis==0 || esnikeys == NULL) {
       return FALSE;
     }
 
