@@ -70,6 +70,7 @@ bool ssl_esni_check(struct Curl_easy *data)
   /* Check for consistency and completeness of ESNI options */
 
   bool result;
+  size_t asciirrlen;
   SSL_ESNI *esnikeys = NULL;    /* Handle for struct holding ESNI data */
   int nesnis = 0;               /* Count of ESNI keys */
   const char *asciirr = data->set.str[STRING_ESNI_ASCIIRR];
@@ -103,13 +104,15 @@ bool ssl_esni_check(struct Curl_easy *data)
     /* We can live with this */
     infof(data, "  missing STRING_ESNI_COVER\n");
 
-  if(data->set.str[STRING_ESNI_ASCIIRR]) {
+  /* if(data->set.str[STRING_ESNI_ASCIIRR]) { */
+  if(asciirr) {
     infof(data, "  found STRING_ESNI_ASCIIRR (%s)\n",
           data->set.str[STRING_ESNI_ASCIIRR]);
 
+    ascirrlen = strlen(ascirr);
     esnikeys = SSL_ESNI_new_from_buffer(
                                         ESNI_RRFMT_GUESS,
-                                        strlen(asciirr), asciirr,
+                                        asciirrlen, asciirr,
                                         &nesnis);
 
     infof(data, "  got nesnis (%d)\n", nesnis);
