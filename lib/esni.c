@@ -167,8 +167,8 @@ static int esni_base64_decode(char *in, unsigned char **out)
 
     /* find length of 1st b64 string */
     int ofraglen = 0;
+    int thisfraglen = strcspn(inp, sepstr);
     inp[thisfraglen] = '\0';
-    int thisfraglen = strcspn(inp,sepstr);
     overallfraglen += (thisfraglen + 1);
 
     ofraglen = EVP_DecodeBlock(outp, (unsigned char *)inp, thisfraglen);
@@ -187,7 +187,7 @@ static int esni_base64_decode(char *in, unsigned char **out)
     }
     outp += (ofraglen-i);
     outlen += (ofraglen-i);
-    inp += (thisfraglen+1);
+    inp += (thisfraglen + 1);
 
   }
 
