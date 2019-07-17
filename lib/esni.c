@@ -123,7 +123,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
   int inlen = (int) strlen(in);
   unsigned char *outbuf;
   unsigned char *outp;
-  int outlen;
+  size_t outlen;
   int i;
 
   /* Check arguments */
@@ -141,6 +141,10 @@ static int esni_ah_decode(char *in, unsigned char **out)
   outlen = inlen/2;
   outbuf = malloc(outlen);
 
+  if(!outbuf)
+    return 0;
+
+  *out = outbuf;
   outp = outbuf;
 
   for(i = 0; i < inlen; i++) {
@@ -189,7 +193,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
 
  err:
   free(outbuf);
-  outbuf = NULL;
+  *out = NULL;
   return -1;
 }
 
