@@ -143,9 +143,9 @@ static int esni_ah_decode(char *in, unsigned char **out)
 
   outp = outbuf;
 
-  for(i=0; i<inlen; i++) {
+  for(i = 0; i < inlen; i++ ) {
     char v;
-    switch (in[i]) {
+    switch(in[i]) {
     case '0':
     case '1':
     case '2':
@@ -156,7 +156,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
     case '7':
     case '8':
     case '9':
-      v = in[i] - (char) '0';
+      v = in[i] - '0';
       break;
     case 'A':
     case 'B':
@@ -164,7 +164,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
     case 'D':
     case 'E':
     case 'F':
-      v = in[i] - (char) ('A' + 10);
+      v = in[i] - 'A' + 10;
       break;
     case 'a':
     case 'b':
@@ -172,7 +172,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
     case 'd':
     case 'e':
     case 'f':
-      v = in[i] - (char) ('a' + 10);
+      v = in[i] - 'a' + 10;
       break;
     default:
       goto err;
