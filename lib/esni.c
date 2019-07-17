@@ -161,8 +161,18 @@ bool ssl_esni_check(struct Curl_easy *data)
     value = esni_guess_fmt(asciirrlen, asciirr, &guessedfmt);
 
     infof(data, "  got value from esni_guess_fmt (%d)\n", value);
-    infof(data, "  got format from esni_guess_fmt (%d)\n", guessedfmt);
-
+    {
+      const char *format = "  got format from esni_guess_fmt (%s)";
+      switch (guessedfmt) {
+      case ESNI_RRFMT_ASCIIHEX:
+        infof(data, format, "ESNI_RRFMT_ASCIIHEX");
+      case ESNI_RRFMT_B64TXT:
+        infof(data, format, "ESNI_RRFMT_B64TXT");
+      case ESNI_RRFMT_BIN:
+        infof(data, format, "ESNI_RRFMT_BIN");
+      default: format, "UNKNOWN");
+    }
+  }
     esnikeys = SSL_ESNI_new_from_buffer(
                                         guessedfmt,
                                         asciirrlen, asciirr,
