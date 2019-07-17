@@ -79,32 +79,33 @@ struct ESNIstate *esni_init(void)
  * @return 1 for success, 0 for error
  */
 static int esni_guess_fmt(const size_t eklen,
-                    const char *esnikeys,
-                    short *guessedfmt)
+                          const char *esnikeys,
+                          short *guessedfmt)
 {
-    /* asci hex is easy:-) either case allowed*/
-    const char *AH_alphabet = "0123456789ABCDEFabcdef";
-    /* we actually add a semi-colon here as we accept multiple semi-colon separated values */
-    const char *B64_alphabet
-      = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=;";
+  /* asci hex is easy:-) either case allowed*/
+  const char *AH_alphabet = "0123456789ABCDEFabcdef";
+  /* we actually add a semi-colon here as we accept multiple
+     semi-colon separated values */
+  const char *B64_alphabet
+    = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=;";
 
-    if(!guessedfmt || eklen <= 0 || !esnikeys) {
-        return (0);
-    }
-    /*
-     * Try from most constrained to least in that order
-     */
-    if(eklen<=strspn(esnikeys, AH_alphabet)) {
-        *guessedfmt = ESNI_RRFMT_ASCIIHEX;
-    }
-    else if(eklen <= strspn(esnikeys, B64_alphabet)) {
-        *guessedfmt = ESNI_RRFMT_B64TXT;
-    }
-    else {
-      /* fallback - try binary */
-        *guessedfmt = ESNI_RRFMT_BIN;
-    }
-    return (1);
+  if(!guessedfmt || eklen <= 0 || !esnikeys) {
+    return (0);
+  }
+  /*
+   * Try from most constrained to least in that order
+   */
+  if(eklen <= strspn(esnikeys, AH_alphabet)) {
+    *guessedfmt = ESNI_RRFMT_ASCIIHEX;
+  }
+  else if(eklen <= strspn(esnikeys, B64_alphabet)) {
+    *guessedfmt = ESNI_RRFMT_B64TXT;
+  }
+  else {
+    /* fallback - try binary */
+    *guessedfmt = ESNI_RRFMT_BIN;
+  }
+  return (1);
 }
 
 bool ssl_esni_check(struct Curl_easy *data)
@@ -152,6 +153,8 @@ bool ssl_esni_check(struct Curl_easy *data)
 
   /* if(data->set.str[STRING_ESNI_ASCIIRR]) { */
   if(asciirr) {
+    asciirrlen = strlen(asciirr);
+
     infof(data, "  found STRING_ESNI_ASCIIRR (%s)\n",
           data->set.str[STRING_ESNI_ASCIIRR]);
 
@@ -160,7 +163,6 @@ bool ssl_esni_check(struct Curl_easy *data)
     infof(data, "  got value from esni_guess_fmt (%d)\n", value);
     infof(data, "  got format from esni_guess_fmt (%d)\n", guessedfmt);
 
-    asciirrlen = strlen(asciirr);
     esnikeys = SSL_ESNI_new_from_buffer(
                                         guessedfmt,
                                         asciirrlen, asciirr,
