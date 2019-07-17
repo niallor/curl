@@ -247,6 +247,7 @@ bool ssl_esni_check(struct Curl_easy *data)
 
   /* if(data->set.str[STRING_ESNI_ASCIIRR]) { */
   if(asciirr) {
+    asciirrlen = strlen(asciirr);
 
     infof(data, "  found STRING_ESNI_ASCIIRR (%ld @%p) (%s)\n",
           asciirrlen, asciirr,
@@ -254,7 +255,6 @@ bool ssl_esni_check(struct Curl_easy *data)
           asciirr
           );
 
-    asciirrlen = strlen(asciirr);
     ekcopy = malloc(asciirrlen + 1);
     if(!ekcopy)
       return FALSE;
