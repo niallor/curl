@@ -144,7 +144,6 @@ static int esni_base64_decode(char *in, unsigned char **out)
   size_t overallfraglen = 0;
 
   char *inp = in;
-  unsigned char *outp = outbuf;
 
   if(out == NULL) {
     return 0;
@@ -169,6 +168,8 @@ static int esni_base64_decode(char *in, unsigned char **out)
     /* find length of 1st b64 string */
     int ofraglen = 0;
     size_t thisfraglen = strcspn(inp, sepstr);
+    unsigned char *outp = outbuf;
+
     inp[thisfraglen] = '\0';
     overallfraglen += (thisfraglen + 1);
 
