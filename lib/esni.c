@@ -35,8 +35,9 @@
 
 #ifdef USE_ESNI
 #include <curl/curl.h>
-#include <openssl/esni.h>
 #include <openssl/evp.h>
+#include <openssl/esni.h>
+#include <openssl/esnierr.h>
 #include "urldata.h"
 #include "sendf.h"
 #include "esni.h"
@@ -134,67 +135,67 @@ static int esni_guess_fmt(const size_t eklen,
  */
 static int esni_base64_decode(char *in, unsigned char **out)
 {
-    const char* sepstr=";";
-    size_t inlen = strlen(in);
-    int i=0;
-    int outlen=0;
-    unsigned char *outbuf = NULL;
-    int overallfraglen=0;
+  const char* sepstr = ";";
+  size_t inlen = strlen(in);
+  int i = 0;
+  int outlen = 0;
+  unsigned char *outbuf = NULL;
+  int overallfraglen = 0;
 
-    if (out == NULL) {
-        return 0;
-    }
-    if (inlen == 0) {
-        *out = NULL;
-        return 0;
+  if (out == NULL) {
+    return 0;
+  }
+  if (inlen == 0) {
+    *out = NULL;
+    return 0;
+  }
+
+  /*
+   * overestimate of space but easier than base64 finding padding right now
+   */
+  outbuf = OPENSSL_malloc(inlen);
+  if (outbuf == NULL) {
+    ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ERR_R_MALLOC_FAILURE);
+    goto err;
+  }
+
+  char *inp = in;
+  unsigned char *outp = outbuf;
+
+  while (overallfraglen<inlen) {
+
+    /* find length of 1st b64 string */
+    int ofraglen = 0;
+    int thisfraglen = strcspn(inp,sepstr);
+    inp[thisfraglen] = '\0';
+    overallfraglen+ = (thisfraglen+1);
+
+    ofraglen = EVP_DecodeBlock(outp, (unsigned char *)inp, thisfraglen);
+    if (ofraglen < 0) {
+      ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ESNI_R_BASE64_DECODE_ERROR);
+      goto err;
     }
 
-    /*
-     * overestimate of space but easier than base64 finding padding right now
-     */
-    outbuf = OPENSSL_malloc(inlen);
-    if (outbuf == NULL) {
-        ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ERR_R_MALLOC_FAILURE);
+    /* Subtract padding bytes from |outlen|.  Any more than 2 is malformed. */
+    i = 0;
+    while (inp[thisfraglen-i-1] == '=') {
+      if (++i > 2) {
+        ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ESNI_R_BASE64_DECODE_ERROR);
         goto err;
+      }
     }
+    outp+ = (ofraglen-i);
+    outlen+ = (ofraglen-i);
+    inp+ = (thisfraglen+1);
 
-    char *inp=in;
-    unsigned char *outp=outbuf;
+  }
 
-    while (overallfraglen<inlen) {
-
-        /* find length of 1st b64 string */
-        int ofraglen=0;
-        int thisfraglen=strcspn(inp,sepstr);
-        inp[thisfraglen]='\0';
-        overallfraglen+=(thisfraglen+1);
-
-        ofraglen = EVP_DecodeBlock(outp, (unsigned char *)inp, thisfraglen);
-        if (ofraglen < 0) {
-            ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ESNI_R_BASE64_DECODE_ERROR);
-            goto err;
-        }
-
-        /* Subtract padding bytes from |outlen|.  Any more than 2 is malformed. */
-        i = 0;
-        while (inp[thisfraglen-i-1] == '=') {
-            if (++i > 2) {
-                ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ESNI_R_BASE64_DECODE_ERROR);
-                goto err;
-            }
-        }
-        outp+=(ofraglen-i);
-        outlen+=(ofraglen-i);
-        inp+=(thisfraglen+1);
-
-    }
-
-    *out = outbuf;
-    return outlen;
-err:
-    OPENSSL_free(outbuf);
-    ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ESNI_R_BASE64_DECODE_ERROR);
-    return -1;
+  *out = outbuf;
+  return outlen;
+ err:
+  OPENSSL_free(outbuf);
+  ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ESNI_R_BASE64_DECODE_ERROR);
+  return -1;
 }
 
 bool ssl_esni_check(struct Curl_easy *data)
