@@ -155,14 +155,17 @@ bool ssl_esni_check(struct Curl_easy *data)
   if(asciirr) {
     asciirrlen = strlen(asciirr);
 
-    infof(data, "  found STRING_ESNI_ASCIIRR (%s)\n",
-          data->set.str[STRING_ESNI_ASCIIRR]);
+    infof(data, "  found STRING_ESNI_ASCIIRR (%ld) (%s)\n",
+          asciirrlen,
+          /* data->set.str[STRING_ESNI_ASCIIRR] */
+          asciirr
+          );
 
     value = esni_guess_fmt(asciirrlen, asciirr, &guessedfmt);
 
     infof(data, "  got value from esni_guess_fmt (%d)\n", value);
     {
-      const char *format = "  got format from esni_guess_fmt (%s)";
+      const char *format = "  got format from esni_guess_fmt (%s)\n";
       switch(guessedfmt) {
       case ESNI_RRFMT_ASCIIHEX:
         infof(data, format, "ESNI_RRFMT_ASCIIHEX");
@@ -182,9 +185,12 @@ bool ssl_esni_check(struct Curl_easy *data)
                                         guessedfmt,
                                         asciirrlen, asciirr,
                                         &nesnis);
-
-    infof(data, "  got nesnis (%d)\n", nesnis);
-    infof(data, "  got esnikeys handle (%p)\n", esnikeys);
+    infof(data,
+          "  SSL_ESNI_new_from_buffer returned nesnis (%d)\n",
+          nesnis);
+    infof(data,
+          "  SSL_ESNI_new_from_buffer returned esnikeys (%p)\n",
+          esnikeys);
 
     if((!nesnis) || (!esnikeys)) {
       result = FALSE;           /* Save for after housekeeping */
