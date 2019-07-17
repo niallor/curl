@@ -82,13 +82,14 @@ static int esni_guess_fmt(const size_t eklen,
                     const char *esnikeys,
                     short *guessedfmt)
 {
-    if(!guessedfmt || eklen <=0 || !esnikeys) {
-        return(0);
-    }
     /* asci hex is easy:-) either case allowed*/
     const char *AH_alphabet="0123456789ABCDEFabcdef";
     /* we actually add a semi-colon here as we accept multiple semi-colon separated values */
     const char *B64_alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=;";
+
+    if(!guessedfmt || eklen <=0 || !esnikeys) {
+        return(0);
+    }
     /*
      * Try from most constrained to least in that order
      */
@@ -112,7 +113,7 @@ bool ssl_esni_check(struct Curl_easy *data)
   short guessedfmt;
   SSL_ESNI *esnikeys = NULL;    /* Handle for struct holding ESNI data */
   int nesnis = 0;               /* Count of ESNI keys */
-  int result;
+  int value;
 
   /* Copy string pointer so line-length conforms to style 8-) */
   char *asciirr = data->set.str[STRING_ESNI_ASCIIRR];
@@ -151,9 +152,9 @@ bool ssl_esni_check(struct Curl_easy *data)
     infof(data, "  found STRING_ESNI_ASCIIRR (%s)\n",
           data->set.str[STRING_ESNI_ASCIIRR]);
 
-    result = esni_guess_fmt(asciirrlen, asciirr, &guessedfmt);
+    value = esni_guess_fmt(asciirrlen, asciirr, &guessedfmt);
 
-    infof(data, "  got result from esni_guess_fmt (%d)\n", result);
+    infof(data, "  got value from esni_guess_fmt (%d)\n", value);
     infof(data, "  got format from esni_guess_fmt (%d)\n", guessedfmt);
 
     asciirrlen = strlen(asciirr);
