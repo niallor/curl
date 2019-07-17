@@ -157,7 +157,8 @@ static int esni_base64_decode(char *in, unsigned char **out)
   /*
    * overestimate of space but easier than base64 finding padding right now
    */
-  outbuf = OPENSSL_malloc(inlen);
+  /* outbuf = OPENSSL_malloc(inlen); */
+  outbuf = malloc(inlen);
   if(outbuf == NULL) {
     ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ERR_R_MALLOC_FAILURE);
     goto err;
@@ -195,7 +196,8 @@ static int esni_base64_decode(char *in, unsigned char **out)
   *out = outbuf;
   return outlen;
  err:
-  OPENSSL_free(outbuf);
+  /* OPENSSL_free(outbuf); */
+  free(outbuf);
   ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ESNI_R_BASE64_DECODE_ERROR);
   return -1;
 }
