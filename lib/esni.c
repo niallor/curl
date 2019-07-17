@@ -120,11 +120,11 @@ static int esni_guess_fmt(const size_t eklen,
  */
 static int esni_ah_decode(char *in, unsigned char **out)
 {
-  size_t inlen = strlen(in);
+  int inlen = (int) strlen(in);
   unsigned char *outbuf;
   unsigned char *outp;
   int outlen;
-  size_t i;
+  int i;
 
   /* Check arguments */
   if(!out)                      /* Nowhere to put it */
@@ -156,7 +156,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
     case '7':
     case '8':
     case '9':
-      v = in[i] - '0';
+      v = in[i] - (char) '0';
       break;
     case 'A':
     case 'B':
@@ -164,7 +164,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
     case 'D':
     case 'E':
     case 'F':
-      v = in[i] - 'A' + 10;
+      v = in[i] - (char) ('A' + 10);
       break;
     case 'a':
     case 'b':
@@ -172,7 +172,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
     case 'd':
     case 'e':
     case 'f':
-      v = in[i] - 'a' + 10;
+      v = in[i] - (char) ('a' + 10);
       break;
     default:
       goto err;
@@ -296,7 +296,9 @@ bool ssl_esni_check(struct Curl_easy *data)
   int nesnis = 0;               /* Count of ESNI keys */
   int value;
   unsigned char *binrr = NULL;  /* Pointer to buffer for decoded RR */
-  char *ekcopy = NULL;          /* Pointer to copy of encoded RR */
+
+  /* Pointer to copy of encoded RR */
+  /* char *ekcopy = NULL; */
 
   /* Copy string pointer so line-length conforms to style 8-) */
   char *asciirr = data->set.str[STRING_ESNI_ASCIIRR];
