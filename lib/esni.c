@@ -163,7 +163,7 @@ bool ssl_esni_check(struct Curl_easy *data)
     infof(data, "  got value from esni_guess_fmt (%d)\n", value);
     {
       const char *format = "  got format from esni_guess_fmt (%s)";
-      switch (guessedfmt) {
+      switch(guessedfmt) {
       case ESNI_RRFMT_ASCIIHEX:
         infof(data, format, "ESNI_RRFMT_ASCIIHEX");
         break;
