@@ -141,7 +141,10 @@ static int esni_base64_decode(char *in, unsigned char **out)
   int i = 0;
   int outlen = 0;
   unsigned char *outbuf = NULL;
-  int overallfraglen = 0;
+  size_t overallfraglen = 0;
+
+  char *inp = in;
+  unsigned char *outp = outbuf;
 
   if(out == NULL) {
     return 0;
@@ -160,18 +163,16 @@ static int esni_base64_decode(char *in, unsigned char **out)
     goto err;
   }
 
-  char *inp = in;
-  unsigned char *outp = outbuf;
-
   while(overallfraglen<inlen) {
 
     /* find length of 1st b64 string */
     int ofraglen = 0;
-    int thisfraglen = strcspn(inp, sepstr);
+    size_t thisfraglen = strcspn(inp, sepstr);
     inp[thisfraglen] = '\0';
     overallfraglen += (thisfraglen + 1);
 
-    ofraglen = EVP_DecodeBlock(outp, (unsigned char *)inp, thisfraglen);
+    ofraglen = EVP_DecodeBlock(outp, (unsigned char *)inp,
+                               (int) thisfraglen);
     if(ofraglen < 0) {
       ESNIerr(ESNI_F_ESNI_BASE64_DECODE, ESNI_R_BASE64_DECODE_ERROR);
       goto err;
@@ -209,6 +210,7 @@ bool ssl_esni_check(struct Curl_easy *data)
   SSL_ESNI *esnikeys = NULL;    /* Handle for struct holding ESNI data */
   int nesnis = 0;               /* Count of ESNI keys */
   int value;
+  unsigned char *binrr = NULL;  /* Handle for RR buffer */
 
   /* Copy string pointer so line-length conforms to style 8-) */
   char *asciirr = data->set.str[STRING_ESNI_ASCIIRR];
@@ -256,6 +258,7 @@ bool ssl_esni_check(struct Curl_easy *data)
 
     infof(data, "  got value from esni_guess_fmt (%d)\n", value);
     {
+      int tdeclen = 0;
       const char *format = "  got format from esni_guess_fmt (%s)\n";
       switch(guessedfmt) {
       case ESNI_RRFMT_ASCIIHEX:
@@ -263,6 +266,11 @@ bool ssl_esni_check(struct Curl_easy *data)
         break;
       case ESNI_RRFMT_B64TXT:
         infof(data, format, "ESNI_RRFMT_B64TXT");
+        tdeclen = esni_base64_decode(asciirr, &binrr);
+        infof(data,
+              "  esni_base64_decode returned length (%d)\n", tdeclen);
+        infof(data,
+              "  esni_base64_decode returned pointer (%p)\n", binrr);
         break;
       case ESNI_RRFMT_BIN:
         infof(data, format, "ESNI_RRFMT_BIN");
