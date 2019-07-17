@@ -166,11 +166,16 @@ bool ssl_esni_check(struct Curl_easy *data)
       switch (guessedfmt) {
       case ESNI_RRFMT_ASCIIHEX:
         infof(data, format, "ESNI_RRFMT_ASCIIHEX");
+        break;
       case ESNI_RRFMT_B64TXT:
         infof(data, format, "ESNI_RRFMT_B64TXT");
+        break;
       case ESNI_RRFMT_BIN:
         infof(data, format, "ESNI_RRFMT_BIN");
-      default: format, "UNKNOWN");
+        break;
+      default:
+        infof(data, format, "UNKNOWN");
+        break;
     }
   }
     esnikeys = SSL_ESNI_new_from_buffer(
