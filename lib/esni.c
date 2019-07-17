@@ -143,7 +143,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
 
   outp = outbuf;
 
-  for(i = 0; i < inlen; i++ ) {
+  for(i = 0; i < inlen; i++) {
     char v;
     switch(in[i]) {
     case '0':
