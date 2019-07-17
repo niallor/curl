@@ -247,18 +247,19 @@ bool ssl_esni_check(struct Curl_easy *data)
 
   /* if(data->set.str[STRING_ESNI_ASCIIRR]) { */
   if(asciirr) {
+
+    infof(data, "  found STRING_ESNI_ASCIIRR (%ld @%p) (%s)\n",
+          asciirrlen, asciirr,
+          /* data->set.str[STRING_ESNI_ASCIIRR] */
+          asciirr
+          );
+
     asciirrlen = strlen(asciirr);
     ekcopy = malloc(asciirrlen + 1);
     if(!ekcopy)
       return FALSE;
     memcpy(ekcopy, asciirr, asciirrlen);
     ekcopy[asciirrlen] = 0;
-
-    infof(data, "  found STRING_ESNI_ASCIIRR (%ld) (%s)\n",
-          asciirrlen,
-          /* data->set.str[STRING_ESNI_ASCIIRR] */
-          asciirr
-          );
 
     value = esni_guess_fmt(asciirrlen, asciirr, &guessedfmt);
 
