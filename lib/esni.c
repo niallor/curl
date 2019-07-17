@@ -210,7 +210,8 @@ bool ssl_esni_check(struct Curl_easy *data)
   SSL_ESNI *esnikeys = NULL;    /* Handle for struct holding ESNI data */
   int nesnis = 0;               /* Count of ESNI keys */
   int value;
-  unsigned char *binrr = NULL;  /* Handle for RR buffer */
+  unsigned char *binrr = NULL;  /* Pointer to buffer for decoded RR */
+  char *ekcopy = NULL;          /* Pointer to copy of encoded RR */
 
   /* Copy string pointer so line-length conforms to style 8-) */
   char *asciirr = data->set.str[STRING_ESNI_ASCIIRR];
@@ -247,6 +248,11 @@ bool ssl_esni_check(struct Curl_easy *data)
   /* if(data->set.str[STRING_ESNI_ASCIIRR]) { */
   if(asciirr) {
     asciirrlen = strlen(asciirr);
+    ekcopy = malloc(asciirrlen + 1);
+    if(!ekcopy)
+      return FALSE;
+    memcpy(ekcopy, asciirr, asciirrlen);
+    ekcopy[asciirrlen] = 0;
 
     infof(data, "  found STRING_ESNI_ASCIIRR (%ld) (%s)\n",
           asciirrlen,
@@ -260,13 +266,14 @@ bool ssl_esni_check(struct Curl_easy *data)
     {
       int tdeclen = 0;
       const char *format = "  got format from esni_guess_fmt (%s)\n";
+
       switch(guessedfmt) {
       case ESNI_RRFMT_ASCIIHEX:
         infof(data, format, "ESNI_RRFMT_ASCIIHEX");
         break;
       case ESNI_RRFMT_B64TXT:
         infof(data, format, "ESNI_RRFMT_B64TXT");
-        tdeclen = esni_base64_decode(asciirr, &binrr);
+        tdeclen = esni_base64_decode(ekcopy, &binrr);
         infof(data,
               "  esni_base64_decode returned length (%d)\n", tdeclen);
         infof(data,
