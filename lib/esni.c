@@ -359,6 +359,9 @@ bool ssl_esni_check(struct Curl_easy *data)
       case ESNI_RRFMT_ASCIIHEX:
         infof(data, format, "ESNI_RRFMT_ASCIIHEX");
         tdeclen = esni_ah_decode(asciirr, &binrr);
+        infof(data,
+              "  esni_ah_decode returned data %p/%d\n",
+              binrr, tdeclen);
         break;
       case ESNI_RRFMT_B64TXT:
         infof(data, format, "ESNI_RRFMT_B64TXT");
@@ -377,6 +380,8 @@ bool ssl_esni_check(struct Curl_easy *data)
         break;
     }
   }
+
+    infof(data, "  TODO: display binary ESNIkeys blob\n");
 
     esnikeys = SSL_ESNI_new_from_buffer(
                                         guessedfmt,
