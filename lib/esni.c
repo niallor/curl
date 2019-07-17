@@ -111,6 +111,88 @@ static int esni_guess_fmt(const size_t eklen,
   return (1);
 }
 
+/** @brief Decode from ASCII HEX RR to binary buffer
+ *
+ *
+ * @param in is the base64 encoded string
+ * @param out is the binary equivalent
+ * @return is the number of octets in |out| if successful, <=0 for failure
+ */
+static int esni_ah_decode(char *in, unsigned char **out)
+{
+  size_t inlen = strlen(in);
+  unsigned char *outbuf;
+  unsigned char *outp;
+  int outlen;
+  size_t i;
+
+  /* Check arguments */
+  if(!out)                      /* Nowhere to put it */
+    return 0;
+
+  if(!inlen) {                  /* Nothing to find */
+    *out = NULL;
+    return 0;
+  }
+
+  if(inlen%2)                   /* Odd, indeed! */
+    return 0;
+
+  outlen = inlen/2;
+  outbuf = malloc(outlen);
+
+  outp = outbuf;
+
+  for(i=0; i<inlen; i++) {
+    char v;
+    switch (in[i]) {
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+      v = in[i] - '0';
+      break;
+    case 'A':
+    case 'B':
+    case 'C':
+    case 'D':
+    case 'E':
+    case 'F':
+      v = in[i] - 'A' + 10;
+      break;
+    case 'a':
+    case 'b':
+    case 'c':
+    case 'd':
+    case 'e':
+    case 'f':
+      v = in[i] - 'a' + 10;
+      break;
+    default:
+      goto err;
+    }
+    if(i%2)
+      /* Odd: move on after merging in low nybble */
+      *outp++ &= v;
+    else
+      /* Even: set high nybble */
+      *outp = v<<4;
+  }
+
+  return outlen;
+
+ err:
+  free(outbuf);
+  outbuf = NULL;
+  return -1;
+}
+
 /**
  * @brief Decode from TXT RR to binary buffer
  *
@@ -252,17 +334,17 @@ bool ssl_esni_check(struct Curl_easy *data)
   if(asciirr) {
     asciirrlen = strlen(asciirr);
 
-    infof(data, "  found STRING_ESNI_ASCIIRR (%ld @%p) (%s)\n",
-          asciirrlen, asciirr,
+    infof(data, "  found STRING_ESNI_ASCIIRR %p/%ld (%s)\n",
+          asciirr, asciirrlen,
           /* data->set.str[STRING_ESNI_ASCIIRR] */
           asciirr
           );
 
-    ekcopy = malloc(asciirrlen + 1);
-    if(!ekcopy)
-      return FALSE;
-    memcpy(ekcopy, asciirr, asciirrlen);
-    ekcopy[asciirrlen] = 0;
+    /* ekcopy = malloc(asciirrlen + 1); */
+    /* if(!ekcopy) */
+    /*   return FALSE; */
+    /* memcpy(ekcopy, asciirr, asciirrlen); */
+    /* ekcopy[asciirrlen] = 0; */
 
     value = esni_guess_fmt(asciirrlen, asciirr, &guessedfmt);
 
@@ -274,14 +356,16 @@ bool ssl_esni_check(struct Curl_easy *data)
       switch(guessedfmt) {
       case ESNI_RRFMT_ASCIIHEX:
         infof(data, format, "ESNI_RRFMT_ASCIIHEX");
+        tdeclen = esni_ah_decode(asciirr, &binrr);
         break;
       case ESNI_RRFMT_B64TXT:
         infof(data, format, "ESNI_RRFMT_B64TXT");
-        tdeclen = esni_base64_decode(ekcopy, &binrr);
+        tdeclen = esni_base64_decode(asciirr, &binrr);
+        /* infof(data, */
+        /*       "  esni_base64_decode returned length (%d)\n", tdeclen); */
         infof(data,
-              "  esni_base64_decode returned length (%d)\n", tdeclen);
-        infof(data,
-              "  esni_base64_decode returned pointer (%p)\n", binrr);
+              "  esni_base64_decode returned data %p/%d\n",
+              binrr, tdeclen);
         break;
       case ESNI_RRFMT_BIN:
         infof(data, format, "ESNI_RRFMT_BIN");
