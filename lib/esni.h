@@ -27,21 +27,7 @@
 #ifdef USE_ESNI
 # include <curl/curl.h>
 
-/* Struct to hold ESNI data, referenced from struct Curl_easy */
-/* Expose details here to simplify interface -- may review later */
-struct ESNIstate {
-  char *encservername;          /* To be used as value of ESNI option */
-  char *servername;             /* Name of host for connecting to */
-  char *public_name;            /* To be used as value of SNI option */
-  char *asciirr;                /* ESNI (formatted as continuous hex) or
-                                 * TXT (formatted as base64 with semicolon
-                                 *      separators) RRset
-                                 */
-};
-
-void esni_free(struct ESNIstate *esni);
-struct ESNIstate *esni_init(void);
-bool ssl_esni_check(struct Curl_easy *data); /* TODO: why static? */
+bool ssl_esni_check(struct Curl_easy *data);
 
 #else  /* ESNI not in use */
 #endif  /* USE_ESNI */

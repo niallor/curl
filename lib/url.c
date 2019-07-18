@@ -382,10 +382,10 @@ CURLcode Curl_close(struct Curl_easy *data)
   Curl_altsvc_cleanup(data->asi);
   data->asi = NULL;
 #endif
-#ifdef USE_ESNI
-  esni_free(data->esni);
-  data->esni = NULL;
-#endif
+/* #ifdef USE_ESNI */
+/*   esni_free(data->esni); */
+/*   data->esni = NULL; */
+/* #endif */
 #if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_CRYPTO_AUTH)
   Curl_http_auth_cleanup_digest(data);
 #endif

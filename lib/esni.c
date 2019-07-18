@@ -21,15 +21,22 @@
  ***************************************************************************/
 
 /***************************************************************************
- * TODO:
  *
- * Consider whether this source file is appropriate, as ESNI support
- * may better belong in relevant backend-specific source which, by
- * convention, MAY ONLY BE lib/vtls/openssl.c for OpenSSL.
+ * Non-backend-specific ESNI support code belongs here, such as functions
+ * - to check ESNI-related libcurl options
+ *   for correctness and consistency
+ * - to parse and display ESNI data
  *
- * Non-backend-specific ESNI support code, if ever there be any, may
- * well belong here.
+ * Backend-specific ESNI support code belongs as additional
+ * backend-interface code in one of the existing vlts backend
+ * interface source files or in an ESNI-specific source file
+ * associated with one of these existing files.
+ *
  ***************************************************************************/
+
+/* TODO:
+ * move backend-specific code from here to a file in the vtls directory
+ */
 
 #include "curl_setup.h"
 
@@ -39,35 +46,15 @@
 #include <openssl/evp.h>
 #include <openssl/esni.h>
 #include <openssl/esnierr.h>
-#include "vtls/vtls.h"
 #include "urldata.h"
 #include "sendf.h"
+#include "vtls/vtls.h"
 #include "esni.h"
 
 /* The last 3 #include files should be in this order */
 #include "curl_printf.h"
 #include "curl_memory.h"
 #include "memdebug.h"
-
-void esni_free(struct ESNIstate *esni)
-{
-  if(esni) {
-    free(esni->encservername);
-    free(esni->servername);
-    free(esni->public_name);
-    free(esni->asciirr);
-    free(esni);
-  }
-}
-
-struct ESNIstate *esni_init(void)
-{
-  struct ESNIstate *esni = calloc(1, sizeof(struct ESNIstate));
-  if(!esni)
-    return NULL;
-
-  return esni;
-}
 
 /**
  * Try figure out ESNIKeys encodng
@@ -389,11 +376,11 @@ bool ssl_esni_check(struct Curl_easy *data)
 
     /* Further checking needs SSL ready */
     /* TODO: check whether this conflicts with state engine */
-
-    /* OPENSSL_init_ssl(0, NULL); */
+    OPENSSL_init_ssl(0, NULL);
 
     /* Try generic initialization instead */
-    Curl_ssl_init();
+    /* Curl_ssl_init(); */
+    /* Doesn't work */
 
     /* Build ESNIkeys blob from buffer, if possible */
     esnikeys
