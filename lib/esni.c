@@ -148,7 +148,7 @@ static int esni_ah_decode(char *in, unsigned char **out)
   outp = outbuf;
 
   for(i = 0; i < inlen; i++) {
-    char v;
+    int v;                      /* Minimizes compiler noise */
     switch(in[i]) {
     case '0':
     case '1':
@@ -183,9 +183,11 @@ static int esni_ah_decode(char *in, unsigned char **out)
     }
     if(i%2)
       /* Odd: move on after merging in low nybble */
+      /* TODO: avoid compiler noise about conversion */
       *outp++ &= v;
     else
       /* Even: set high nybble */
+      /* TODO: avoid compiler noise about conversion */
       *outp = v<<4;
   }
 
@@ -336,21 +338,14 @@ bool ssl_esni_check(struct Curl_easy *data)
     /* We can live with this */
     infof(data, "  missing STRING_ESNI_COVER\n");
 
-  /* if(data->set.str[STRING_ESNI_ASCIIRR]) { */
-  if(asciirr) {
-    asciirrlen = strlen(asciirr);
+  if(data->set.str[STRING_ESNI_ASCIIRR]) {
+    asciirrlen = strlen(data->set.str[STRING_ESNI_ASCIIRR]);
 
     infof(data, "  found STRING_ESNI_ASCIIRR %p/%ld (%s)\n",
-          asciirr, asciirrlen,
-          /* data->set.str[STRING_ESNI_ASCIIRR] */
-          asciirr
+          data->set.str[STRING_ESNI_ASCIIRR],
+          asciirrlen,
+          data->set.str[STRING_ESNI_ASCIIRR]
           );
-
-    /* ekcopy = malloc(asciirrlen + 1); */
-    /* if(!ekcopy) */
-    /*   return FALSE; */
-    /* memcpy(ekcopy, asciirr, asciirrlen); */
-    /* ekcopy[asciirrlen] = 0; */
 
     value = esni_guess_fmt(asciirrlen, asciirr, &guessedfmt);
 
@@ -387,10 +382,20 @@ bool ssl_esni_check(struct Curl_easy *data)
 
     infof(data, "  TODO: display binary ESNIkeys blob\n");
 
-    esnikeys = SSL_ESNI_new_from_buffer(
-                                        guessedfmt,
-                                        asciirrlen, asciirr,
-                                        &nesnis);
+    /* TODO:
+     * consider whether there's anything else to check
+     * before initializing SSL */
+
+    /* Further checking needs SSL ready */
+    /* TODO: check whether this conflicts with state engine */
+    OPENSSL_init_ssl(0, NULL);
+
+    /* Build ESNIkeys blob from buffer, if possible */
+    esnikeys
+      = SSL_ESNI_new_from_buffer(guessedfmt,
+                                 asciirrlen,
+                                 data->set.str[STRING_ESNI_ASCIIRR],
+                                 &nesnis);
     infof(data,
           "  SSL_ESNI_new_from_buffer returned nesnis (%d)\n",
           nesnis);
