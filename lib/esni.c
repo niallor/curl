@@ -388,7 +388,11 @@ bool ssl_esni_check(struct Curl_easy *data)
 
     /* Further checking needs SSL ready */
     /* TODO: check whether this conflicts with state engine */
-    OPENSSL_init_ssl(0, NULL);
+
+    /* OPENSSL_init_ssl(0, NULL); */
+
+    /* Try generic initialization instead */
+    Curl_ssl_init();
 
     /* Build ESNIkeys blob from buffer, if possible */
     esnikeys
