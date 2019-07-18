@@ -39,6 +39,7 @@
 #include <openssl/evp.h>
 #include <openssl/esni.h>
 #include <openssl/esnierr.h>
+#include "vtls/vtls.h"
 #include "urldata.h"
 #include "sendf.h"
 #include "esni.h"
