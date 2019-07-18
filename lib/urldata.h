@@ -1848,10 +1848,10 @@ struct Curl_easy {
 #ifdef USE_ALTSVC
   struct altsvcinfo *asi;      /* the alt-svc cache */
 #endif
-#ifdef USE_ESNI
-  /* TODO: strip if actually redundant here */
-  struct ESNIstate *esni;      /* the ESNI data */
-#endif
+/* #ifdef USE_ESNI */
+/*   /\* TODO: strip if actually redundant here *\/ */
+/*   struct ESNIstate *esni;      /\* the ESNI data *\/ */
+/* #endif */
   struct Progress progress;    /* for all the progress meter data */
   struct UrlState state;       /* struct for fields used for state info and
                                   other dynamic purposes */
