@@ -44,6 +44,7 @@
 #include <curl/curl.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/ssl.h>
 #include <openssl/esni.h>
 #include <openssl/esnierr.h>
 #include "urldata.h"
@@ -376,7 +377,8 @@ bool ssl_esni_check(struct Curl_easy *data)
 
     /* Further checking needs SSL ready */
     /* TODO: check whether this conflicts with state engine */
-    OPENSSL_init_ssl(0, NULL);
+    /* OPENSSL_init_ssl(0, NULL); */
+    SSL_library_init();         /* More evocative than above */
 
     /* Try generic initialization instead */
     /* Curl_ssl_init(); */
