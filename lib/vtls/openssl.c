@@ -2738,6 +2738,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
       /* TODO: remember to free ESNI data object */
       SSL_ESNI *esnikeys = NULL; /* Handle for ESNI data object */
       bool value_error = FALSE;  /* Problem flag */
+      size_t asciirrlen = 0;     /* Length of STRING_ESNI_ASCIIRR */
       int nesnis = 0;            /* Count of ESNI keys */
       if(!data->set.str[STRING_ESNI_SERVER]) {
         infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
@@ -2756,10 +2757,23 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
          *
          * Do this here because OpenSSL library code is needed,
          * which must not be exposed elsewhere in libcurl.
-         *
-         * On failure to decode, set value_error and give warning
-         * "failed to decode STRING_ESNI_ASCIIRR\n"
          */
+
+        asciirrlen = strlen(data->set.str[STRING_ESNI_ASCIIRR]);
+        esnikeys
+          = SSL_ESNI_new_from_buffer(ESNI_RRFMT_GUESS,
+                                     asciirrlen,
+                                     data->set.str[STRING_ESNI_ASCIIRR],
+                                     &nesnis);
+        if((!esnikeys) || (!nesnis)) {
+          if(esnikeys) {
+            free(esnikeys);
+            esnikeys = NULL;
+          }
+          infof(data,
+                "WARNING: failed to decode STRING_ESNI_ASCIIRR\n");
+          value_error = TRUE;
+        }
       }
       if(value_error)
         /* Spell out consequence of any of the above errors */
@@ -2767,21 +2781,16 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
               "indication (ESNI) TLS extension "
               "due to error reported earlier\n");
       else {
-        /* TODO: propagate ESNI parameters to OpenSSL context perhaps
-         * like this:
-         *
-         * SSL_esni_enable(BACKEND->handle,   /\* what we just got *\/
-         *                 data->set.str[STRING_ESNI_SERVER],
-         *                 data->set.str[STRING_ESNI_COVER],
-         *                 esnikeys,          /\* decoded just now *\/
-         *                 nesnis,            /\* decoded just now *\/
-         *                 data->set.tls_strict_esni /\* flag bit  *\/
-         *                 )
-         *
-         * On failure, give warning
-         * "failed to configure encrypted server name "
-         * "(ESNI) TLS extension\n"
-         */
+        /* Propagate ESNI parameters to OpenSSL context */
+        if(!SSL_esni_enable(BACKEND->handle,
+                            data->set.str[STRING_ESNI_SERVER],
+                            data->set.str[STRING_ESNI_COVER],
+                            esnikeys, /* decoded just now */
+                            nesnis,   /* decoded just now */
+                            data->set.tls_strict_esni /* flag bit  */
+                            ))
+          infof(data, "WARNING: failed to configure "
+                "encrypted server name (ESNI) TLS extension\n");
       }
     }
 #endif  /* USE_ESNI */
