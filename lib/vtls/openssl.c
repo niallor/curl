@@ -2747,6 +2747,23 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
      !SSL_set_tlsext_host_name(BACKEND->handle, hostname))
     infof(data, "WARNING: failed to configure server name indication (SNI) "
           "TLS extension\n");
+
+  /* TODO: propagate ESNI parameters to OpenSSL context from either
+   * easy handle or connection handle here, perhaps like this, after
+   * ensuring that all needed values have been propagated or
+   * synthesized:
+   *
+   * SSL_esni_enable(BACKEND->handle,   /\* what we just got           *\/
+   *                 encservername,     /\* option, or use hostname    *\/
+   *                 servername,        /\* option, or use hostname    *\/
+   *                 esnikeys,          /\* this and following from    *\/
+   *                 nesnis,            /\* SSL_ESNI_new_from_buffer() *\/
+   *                 data->set.tls_strict_esni /\* option              *\/
+   *                 )
+   *
+   * E poi vediamo!
+   * */
+
 #endif
 
   /* Check if there's a cached ID we can/should use here! */
