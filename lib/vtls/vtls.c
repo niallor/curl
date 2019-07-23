@@ -244,11 +244,6 @@ Curl_ssl_connect(struct connectdata *conn, int sockindex)
   if(!ssl_prefs_check(conn->data))
     return CURLE_SSL_CONNECT_ERROR;
 
-#ifdef USE_ESNI
-  if(!ssl_esni_check(conn->data))
-    return CURLE_SSL_CONNECT_ERROR;
-#endif
-
   /* mark this is being ssl-enabled from here on. */
   conn->ssl[sockindex].use = TRUE;
   conn->ssl[sockindex].state = ssl_connection_negotiating;
@@ -274,11 +269,6 @@ Curl_ssl_connect_nonblocking(struct connectdata *conn, int sockindex,
 
   if(!ssl_prefs_check(conn->data))
     return CURLE_SSL_CONNECT_ERROR;
-
-#ifdef USE_ESNI
-  if(!ssl_esni_check(conn->data))
-    return CURLE_SSL_CONNECT_ERROR;
-#endif
 
   /* mark this is being ssl requested from here on. */
   conn->ssl[sockindex].use = TRUE;
