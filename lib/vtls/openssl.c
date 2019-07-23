@@ -2746,12 +2746,14 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
 #ifdef USE_ESNI
     /* TODO: review appropriateness of nesting conditional blocks */
     if(data->set.tls_enable_esni) {
+
       /* TODO: move these variables to a better place, if possible */
       /* TODO: remember to free ESNI data object */
       SSL_ESNI *esnikeys = NULL; /* Handle for ESNI data object */
       bool value_error = FALSE;  /* Problem flag */
       size_t asciirrlen = 0;     /* Length of STRING_ESNI_ASCIIRR */
       int nesnis = 0;            /* Count of ESNI keys */
+
       if(!data->set.str[STRING_ESNI_SERVER]) {
         infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
         value_error = TRUE;
@@ -2772,7 +2774,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
         infof(data, "WARNING: missing value for STRING_ESNI_ASCIIRR\n");
         value_error = TRUE;
       }
-      else
+      else {
         infof(data, "  found STRING_ESNI_SERVER (%s)\n",
               data->set.str[STRING_ESNI_SERVER]);
 
@@ -2798,6 +2800,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
           value_error = TRUE;
         }
       }
+
       if(value_error)
         /* Spell out consequence of any of the above errors */
         infof(data, "WARNING: unable to configure encrypted server name "
