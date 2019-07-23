@@ -2738,10 +2738,12 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
       size_t asciirrlen = 0;     /* Length of STRING_ESNI_ASCIIRR */
       int nesnis = 0;            /* Count of ESNI keys */
 
-      /* Came this far, so ssl_enable_esni must be set */
-      infof(data, "  found flag ssl_enable_esni (SET)\n");
+      infof(data, "Found ESNI parameters:\n");
 
-      infof(data, "  found flag ssl_strict_esni %s\n",
+      /* Came this far, so ssl_enable_esni must be set */
+      infof(data, "  flag ssl_enable_esni (SET)\n");
+
+      infof(data, "  flag ssl_strict_esni %s\n",
             (data->set.tls_strict_esni ? "(SET)" : "(CLEAR)"));
 
       if(!data->set.str[STRING_ESNI_SERVER]) {
@@ -2749,7 +2751,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
         value_error = TRUE;
       }
       else
-        infof(data, "  found STRING_ESNI_SERVER (%s)\n",
+        infof(data, "  STRING_ESNI_SERVER (%s)\n",
               data->set.str[STRING_ESNI_SERVER]);
 
       if(!data->set.str[STRING_ESNI_COVER]) {
@@ -2757,7 +2759,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
         value_error = TRUE;
       }
       else
-        infof(data, "  found STRING_ESNI_COVER (%s)\n",
+        infof(data, "  STRING_ESNI_COVER (%s)\n",
               data->set.str[STRING_ESNI_COVER]);
 
       if(!data->set.str[STRING_ESNI_ASCIIRR]) {
@@ -2765,7 +2767,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
         value_error = TRUE;
       }
       else {
-        infof(data, "  found STRING_ESNI_ASCIIRR (%s)\n",
+        infof(data, "  STRING_ESNI_ASCIIRR (%s)\n",
               data->set.str[STRING_ESNI_ASCIIRR]);
 
         /* Decode STRING_ESNI_ASCIIRR as esnikeys, nesnis;
