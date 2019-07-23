@@ -2818,7 +2818,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
         unsigned char *display[65];
         infof(data, "Found %d ESNI key%s\n",
               nesnis, ((nesnis==1) ? "" :"s"));
-        for(i = 0; i<2; i++) {
+        for(int i = 0; i<2; i++) {
           snprintf(display[i], 2, "%02x", esnikeys[i]);
         }
         infof(data, "Found ESNIkeys signature (%s)", display);
