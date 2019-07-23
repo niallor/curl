@@ -1707,10 +1707,6 @@ static CURLcode verifystatus(struct connectdata *conn,
   X509_STORE     *st = NULL;
   STACK_OF(X509) *ch = NULL;
 
-  /* TODO:
-   * consider (also) handling of OCSP extension as model for ESNI
-   */
-
   long len = SSL_get_tlsext_status_ocsp_resp(BACKEND->handle, &status);
 
   if(!status) {
@@ -2744,15 +2740,26 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
         infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
         value_error = TRUE;
       }
+      else
+        infof(data, "  found STRING_ESNI_SERVER (%s)\n",
+              data->set.str[STRING_ESNI_SERVER]);
+
       if(!data->set.str[STRING_ESNI_COVER]) {
         infof(data, "WARNING: missing value for STRING_ESNI_COVER\n");
         value_error = TRUE;
       }
+      else
+        infof(data, "  found STRING_ESNI_SERVER (%s)\n",
+              data->set.str[STRING_ESNI_SERVER]);
+
       if(!data->set.str[STRING_ESNI_ASCIIRR]) {
         infof(data, "WARNING: missing value for STRING_ESNI_ASCIIRR\n");
         value_error = TRUE;
       }
-      else {
+      else
+        infof(data, "  found STRING_ESNI_SERVER (%s)\n",
+              data->set.str[STRING_ESNI_SERVER]);
+
         /* Decode STRING_ESNI_ASCIIRR as esnikeys, nesnis;
          *
          * Do this here because OpenSSL library code is needed,
@@ -2766,12 +2773,12 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
                                      data->set.str[STRING_ESNI_ASCIIRR],
                                      &nesnis);
         if((!esnikeys) || (!nesnis)) {
+          infof(data,
+                "WARNING: failed to decode STRING_ESNI_ASCIIRR\n");
           if(esnikeys) {
             free(esnikeys);
             esnikeys = NULL;
           }
-          infof(data,
-                "WARNING: failed to decode STRING_ESNI_ASCIIRR\n");
           value_error = TRUE;
         }
       }
@@ -2790,6 +2797,9 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
                             data->set.tls_strict_esni /* flag bit  */
                             ))
           infof(data, "WARNING: failed to configure "
+                "encrypted server name (ESNI) TLS extension\n");
+        else
+          infof(data, "configured "
                 "encrypted server name (ESNI) TLS extension\n");
       }
     }
