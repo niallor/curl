@@ -2816,7 +2816,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
               "due to error reported earlier\n");
       else {
         infof(data, "Found %d ESNI key%s\n",
-              nesnis, ((nesnis==1) ? "" :"s"));
+              nesnis, ((nesnis == 1) ? "" :"s"));
 
         /* Propagate ESNI parameters to OpenSSL context */
         if(!SSL_esni_enable(BACKEND->handle,
