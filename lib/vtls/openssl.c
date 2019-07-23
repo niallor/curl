@@ -2799,6 +2799,14 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
               "indication (ESNI) TLS extension "
               "due to error reported earlier\n");
       else {
+        unsigned char *display[65];
+        infof(data, "Found %d ESNI key%s\n",
+              nesnis, ((nesnis==1) ? "" :"s"));
+        for(i = 0; i<2; i++) {
+          snprintf(display[i], 2, "%02x", esnikeys[i]);
+        }
+        infof(data, "Found ESNIkeys signature (%s)", display);
+
         /* Propagate ESNI parameters to OpenSSL context */
         if(!SSL_esni_enable(BACKEND->handle,
                             data->set.str[STRING_ESNI_SERVER],
@@ -2810,7 +2818,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
           infof(data, "WARNING: failed to configure "
                 "encrypted server name (ESNI) TLS extension\n");
         else
-          infof(data, "configured "
+          infof(data, "Configured "
                 "encrypted server name (ESNI) TLS extension\n");
       }
     }
