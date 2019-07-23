@@ -2815,6 +2815,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
               "indication (ESNI) TLS extension "
               "due to error reported earlier\n");
       else {
+        infof(data, "SSL_ESNI object version (%0x)\n", esnikeys.version);
         infof(data, "Found %d ESNI key%s\n",
               nesnis, ((nesnis == 1) ? "" :"s"));
 
