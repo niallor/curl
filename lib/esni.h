@@ -27,7 +27,7 @@
 #ifdef USE_ESNI
 # include <curl/curl.h>
 
-bool Curl_ESNI_ready(struct Curl_easy *data);
+bool Curl_esni_ready(struct Curl_easy *data);
 
 #else  /* ESNI not in use */
 #endif  /* USE_ESNI */
