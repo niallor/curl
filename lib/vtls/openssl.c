@@ -62,8 +62,6 @@
 #include <openssl/pkcs12.h>
 #ifdef USE_ESNI
 #include <openssl/esni.h>
-/* TODO: strip following after confirming its redundancy */
-/* #include <openssl/esnierr.h> */
 #endif /* USE_ESNI */
 
 #ifdef USE_AMISSL
@@ -234,6 +232,13 @@ struct ssl_backend_data {
   /* tap_state holds the last seen master key if we're logging them */
   ssl_tap_state_t tap_state;
 #endif
+#ifdef USE_ESNI
+  /* TODO: when freeing BACKEND, provide for freeing ESNIKEYS */
+  SSL_ESNI *esnikeys;           /* Handle for ESNI data object */
+  int nesnis;                   /* Count of ESNI keys */
+#define ESNIKEYS BACKEND->esnikeys
+#define NESNIS BACKEND->nesnis
+#endif  /* USE_ESNI */
 };
 
 #define BACKEND connssl->backend
@@ -2736,11 +2741,6 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
       bool value_error = FALSE;  /* Problem flag */
       size_t asciirrlen = 0;     /* Length of STRING_ESNI_ASCIIRR */
 
-      /* TODO: move these variables to a better place (in data or conn?) */
-      /* TODO: remember to free ESNI data object */
-      SSL_ESNI *esnikeys = NULL; /* Handle for ESNI data object */
-      int nesnis = 0;            /* Count of ESNI keys */
-
       value_error = !Curl_esni_ready(data);
 
       infof(data, "Found ESNI parameters:\n");
@@ -2763,26 +2763,29 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
         infof(data, "  STRING_ESNI_ASCIIRR (%s)\n",
               data->set.str[STRING_ESNI_ASCIIRR]);
 
-      /* Decode STRING_ESNI_ASCIIRR as esnikeys, nesnis;
+      /* Decode STRING_ESNI_ASCIIRR as ESNIKEYS, NESNIS;
        *
        * Do this here because OpenSSL library code is needed,
        * which must not be exposed elsewhere in libcurl.
        */
 
-      asciirrlen = strlen(data->set.str[STRING_ESNI_ASCIIRR]);
-      esnikeys
-        = SSL_ESNI_new_from_buffer(ESNI_RRFMT_GUESS,
-                                   asciirrlen,
-                                   data->set.str[STRING_ESNI_ASCIIRR],
-                                   &nesnis);
-      if((!esnikeys) || (!nesnis)) {
-        infof(data,
-              "WARNING: failed to decode STRING_ESNI_ASCIIRR\n");
-        if(esnikeys) {
-          free(esnikeys);
-          esnikeys = NULL;
+      if(!ESNIKEYS) {
+        /* We don't have this yet/still, so make a new one */
+        asciirrlen = strlen(data->set.str[STRING_ESNI_ASCIIRR]);
+        ESNIKEYS
+          = SSL_ESNI_new_from_buffer(ESNI_RRFMT_GUESS,
+                                     asciirrlen,
+                                     data->set.str[STRING_ESNI_ASCIIRR],
+                                     &NESNIS);
+        if((!ESNIKEYS) || (!NESNIS)) {
+          infof(data,
+                "WARNING: failed to decode STRING_ESNI_ASCIIRR\n");
+          if(ESNIKEYS) {
+            free(ESNIKEYS);
+            ESNIKEYS = NULL;
+          }
+          value_error = TRUE;
         }
-        value_error = TRUE;
       }
 
       if(value_error)
@@ -2792,16 +2795,16 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
               "due to error reported earlier\n");
       else {
         infof(data, "SSL_ESNI object version (%0x)\n",
-              esnikeys->version);
+              ESNIKEYS->version);
         infof(data, "Found %d ESNI key%s\n",
-              nesnis, ((nesnis == 1) ? "" :"s"));
+              NESNIS, ((NESNIS == 1) ? "" :"s"));
 
         /* Propagate ESNI parameters to OpenSSL context */
         if(!SSL_esni_enable(BACKEND->handle,
                             data->set.str[STRING_ESNI_SERVER],
                             data->set.str[STRING_ESNI_COVER],
-                            esnikeys, /* decoded just now */
-                            nesnis,   /* decoded just now */
+                            ESNIKEYS, /* decoded just now */
+                            NESNIS,   /* decoded just now */
                             data->set.tls_strict_esni /* flag bit  */
                             ))
           infof(data, "WARNING: failed to configure "
