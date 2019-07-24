@@ -2798,7 +2798,14 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
           infof(data,
                 "WARNING: failed to decode STRING_ESNI_ASCIIRR\n");
           if(ESNIKEYS) {
-            free(ESNIKEYS);
+            /* TODO: ascertain the RIGHT WAY to free ESNIKEYS
+             * Any of these might not be the one we need:
+             * - SSL_CTX_free()
+             * - SSL_free()
+             * - OPENSSL_free(peer_CN)
+             * Maybe look to OpenSSL s_client code.
+             */
+            free(ESNIKEYS);     /* Tentative: may be leaky */
             ESNIKEYS = NULL;
           }
           value_error = TRUE;
