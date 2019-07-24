@@ -2779,27 +2779,26 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
         infof(data, "  STRING_ESNI_ASCIIRR (%s)\n",
               data->set.str[STRING_ESNI_ASCIIRR]);
 
-        /* Decode STRING_ESNI_ASCIIRR as esnikeys, nesnis;
-         *
-         * Do this here because OpenSSL library code is needed,
-         * which must not be exposed elsewhere in libcurl.
-         */
+      /* Decode STRING_ESNI_ASCIIRR as esnikeys, nesnis;
+       *
+       * Do this here because OpenSSL library code is needed,
+       * which must not be exposed elsewhere in libcurl.
+       */
 
-        asciirrlen = strlen(data->set.str[STRING_ESNI_ASCIIRR]);
-        esnikeys
-          = SSL_ESNI_new_from_buffer(ESNI_RRFMT_GUESS,
-                                     asciirrlen,
-                                     data->set.str[STRING_ESNI_ASCIIRR],
-                                     &nesnis);
-        if((!esnikeys) || (!nesnis)) {
-          infof(data,
-                "WARNING: failed to decode STRING_ESNI_ASCIIRR\n");
-          if(esnikeys) {
-            free(esnikeys);
-            esnikeys = NULL;
-          }
-          value_error = TRUE;
+      asciirrlen = strlen(data->set.str[STRING_ESNI_ASCIIRR]);
+      esnikeys
+        = SSL_ESNI_new_from_buffer(ESNI_RRFMT_GUESS,
+                                   asciirrlen,
+                                   data->set.str[STRING_ESNI_ASCIIRR],
+                                   &nesnis);
+      if((!esnikeys) || (!nesnis)) {
+        infof(data,
+              "WARNING: failed to decode STRING_ESNI_ASCIIRR\n");
+        if(esnikeys) {
+          free(esnikeys);
+          esnikeys = NULL;
         }
+        value_error = TRUE;
       }
 
       if(value_error)
