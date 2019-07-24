@@ -54,10 +54,17 @@
  * @param data is the Curl_easy handle to inspect
  * @return TRUE if complete, FALSE otherwise
  */
-bool Curl_ESNI_ready(struct Curl_easy *data) {
+bool Curl_ESNI_ready(struct Curl_easy *data)
+{
+  if(!data)
+    return FALSE;               /* NULL handle: surely not ready! */
 
-  /* TODO: actually inspect ESNI parameters */
-  return TRUE;                  /* Stub always returns TRUE */
+  if(!data->set.str[STRING_ESNI_ASCIIRR])
+    return FALSE;               /* No ESNI key data */
+
+  /* TODO: review completeness of inspection above */
+
+  return TRUE;                  /* Nothing missing, apparently */
 }
 
 /* *** Unreferenced code begins */
@@ -84,7 +91,8 @@ bool Curl_ESNI_ready(struct Curl_easy *data) {
 /*   /\* we actually add a semi-colon here as we accept multiple */
 /*      semi-colon separated values *\/ */
 /*   const char *B64_alphabet */
-/*     = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=;"; */
+/*     = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" */
+/*       "abcdefghijklmnopqrstuvwxyz0123456789+/=;"; */
 
 /*   if(!guessedfmt || eklen <= 0 || !esnikeys) { */
 /*     return (0); */
@@ -110,7 +118,8 @@ bool Curl_ESNI_ready(struct Curl_easy *data) {
 /*  * */
 /*  * @param in is the base64 encoded string */
 /*  * @param out is the binary equivalent */
-/*  * @return is the number of octets in |out| if successful, <=0 for failure */
+/*  * @return is the number of octets in |out| if successful, */
+/*  *         <=0 for failure */
 /*  *\/ */
 /* static int esni_ah_decode(char *in, unsigned char **out) */
 /* { */
@@ -207,14 +216,16 @@ bool Curl_ESNI_ready(struct Curl_easy *data) {
 /*  * multivalued RRs. */
 /*  * */
 /*  * Decodes the base64 string |in| into |out|. */
-/*  * A new string will be malloc'd and assigned to |out|. This will be owned by */
-/*  * the caller. Do not provide a pre-allocated string in |out|. */
+/*  * A new string will be malloc'd and assigned to |out|. */
+/*  * This will be owned by the caller. */
+/*  * Do not provide a pre-allocated string in |out|. */
 /*  * The input is modified if multivalued (NULL bytes are added in */
 /*  * place of semi-colon separators. */
 /*  * */
 /*  * @param in is the base64 encoded string */
 /*  * @param out is the binary equivalent */
-/*  * @return is the number of octets in |out| if successful, <=0 for failure */
+/*  * @return is the number of octets in |out| if successful, */
+/*  *         <=0 for failure */
 /*  *\/ */
 /* static int esni_base64_decode(char *in, unsigned char **out) */
 /* { */
@@ -236,7 +247,8 @@ bool Curl_ESNI_ready(struct Curl_easy *data) {
 /*   } */
 
 /*   /\* */
-/*    * overestimate of space but easier than base64 finding padding right now */
+/*    * overestimate of space */
+/*    * but easier than base64 finding padding right now */
 /*    *\/ */
 /*   /\* outbuf = OPENSSL_malloc(inlen); *\/ */
 /*   outbuf = malloc(inlen); */
@@ -262,7 +274,8 @@ bool Curl_ESNI_ready(struct Curl_easy *data) {
 /*       goto err; */
 /*     } */
 
-/*     /\* Subtract padding bytes from |outlen|.  Any more than 2 is malformed. *\/ */
+/*     /\* Subtract padding bytes from |outlen|.  *\/ */
+/*     /\* Any more than 2 is malformed. *\/ */
 /*     i = 0; */
 /*     while(inp[thisfraglen-i-1] == '=') { */
 /*       if(++i > 2) { */
@@ -292,7 +305,7 @@ bool Curl_ESNI_ready(struct Curl_easy *data) {
 /*   bool result; */
 /*   size_t asciirrlen; */
 /*   short guessedfmt; */
-/*   SSL_ESNI *esnikeys = NULL;    /\* Handle for struct holding ESNI data *\/ */
+/*   SSL_ESNI *esnikeys = NULL;    /\* Handle for ESNI data struct *\/ */
 /*   int nesnis = 0;               /\* Count of ESNI keys *\/ */
 /*   int value; */
 /*   unsigned char *binrr = NULL;  /\* Pointer to buffer for decoded RR *\/ */
@@ -359,8 +372,6 @@ bool Curl_ESNI_ready(struct Curl_easy *data) {
 /*       case ESNI_RRFMT_B64TXT: */
 /*         infof(data, format, "ESNI_RRFMT_B64TXT"); */
 /*         tdeclen = esni_base64_decode(asciirr, &binrr); */
-/*         /\* infof(data, *\/ */
-/*         /\*       "  esni_base64_decode returned length (%d)\n", tdeclen); *\/ */
 /*         infof(data, */
 /*               "  esni_base64_decode returned data %p/%d\n", */
 /*               binrr, tdeclen); */
