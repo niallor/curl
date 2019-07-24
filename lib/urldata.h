@@ -272,12 +272,6 @@ struct curl_ssl_session {
 #include "curl_sspi.h"
 #endif
 
-/* TODO: strip if actually redundant here */
-/* *** Try it and see! */
-/* #ifdef USE_ESNI */
-/* #include "esni.h" */
-/* #endif */
-
 /* Struct used for Digest challenge-response authentication */
 struct digestdata {
 #if defined(USE_WINDOWS_SSPI)
@@ -467,15 +461,6 @@ struct ConnectBits {
   bit tls_enable_alpn:1; /* TLS ALPN extension? */
   bit socksproxy_connecting:1; /* connecting through a socks proxy */
   bit connect_only:1;
-/* #ifdef USE_ESNI */
-/*   /\* */
-/*    *  TODO: decide whether here, in UserDefined, or in both. We'll do */
-/*    *  both, to allow distinguishing between parameter and state, and */
-/*    *  review afterwards. */
-/*    *\/ */
-/*   bit tls_enable_esni:1;        /\* TLS ESNI extension? *\/ */
-/*   bit tls_strict_esni:1;        /\* TLS ESNI extension: strict mode? *\/ */
-/* #endif */
 };
 
 struct hostname {
@@ -1852,10 +1837,6 @@ struct Curl_easy {
 #ifdef USE_ALTSVC
   struct altsvcinfo *asi;      /* the alt-svc cache */
 #endif
-/* #ifdef USE_ESNI */
-/*   /\* TODO: strip if actually redundant here *\/ */
-/*   struct ESNIstate *esni;      /\* the ESNI data *\/ */
-/* #endif */
   struct Progress progress;    /* for all the progress meter data */
   struct UrlState state;       /* struct for fields used for state info and
                                   other dynamic purposes */
