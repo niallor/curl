@@ -273,9 +273,10 @@ struct curl_ssl_session {
 #endif
 
 /* TODO: strip if actually redundant here */
-#ifdef USE_ESNI
-#include "esni.h"
-#endif
+/* *** Try it and see! */
+/* #ifdef USE_ESNI */
+/* #include "esni.h" */
+/* #endif */
 
 /* Struct used for Digest challenge-response authentication */
 struct digestdata {
@@ -466,15 +467,15 @@ struct ConnectBits {
   bit tls_enable_alpn:1; /* TLS ALPN extension? */
   bit socksproxy_connecting:1; /* connecting through a socks proxy */
   bit connect_only:1;
-#ifdef USE_ESNI
-  /*
-   *  TODO: decide whether here, in UserDefined, or in both. We'll do
-   *  both, to allow distinguishing between parameter and state, and
-   *  review afterwards.
-   */
-  bit tls_enable_esni:1;        /* TLS ESNI extension? */
-  bit tls_strict_esni:1;        /* TLS ESNI extension: strict checking? */
-#endif
+/* #ifdef USE_ESNI */
+/*   /\* */
+/*    *  TODO: decide whether here, in UserDefined, or in both. We'll do */
+/*    *  both, to allow distinguishing between parameter and state, and */
+/*    *  review afterwards. */
+/*    *\/ */
+/*   bit tls_enable_esni:1;        /\* TLS ESNI extension? *\/ */
+/*   bit tls_strict_esni:1;        /\* TLS ESNI extension: strict checking? *\/ */
+/* #endif */
 };
 
 struct hostname {
