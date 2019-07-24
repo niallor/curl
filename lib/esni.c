@@ -54,17 +54,31 @@
  * @param data is the Curl_easy handle to inspect
  * @return TRUE if complete, FALSE otherwise
  */
-bool Curl_ESNI_ready(struct Curl_easy *data)
+bool Curl_esni_ready(struct Curl_easy *data)
 {
+  bool ready = TRUE;
   if(!data)
     return FALSE;               /* NULL handle: surely not ready! */
 
-  if(!data->set.str[STRING_ESNI_ASCIIRR])
-    return FALSE;               /* No ESNI key data */
+  if(data->set.tls_enable_esni) {
+    /* ESNI enabled: look for what will be needed */
+    if(!data->set.str[STRING_ESNI_ASCIIRR]) {
+      infof(data, "WARNING: missing value for STRING_ESNI_ASCIIRR\n");
+      ready = FALSE;
+    }
+    if(!data->set.str[STRING_ESNI_COVER]) {
+      infof(data, "WARNING: missing value for STRING_ESNI_COVER\n");
+      ready = FALSE;
+    }
+    if(!data->set.str[STRING_ESNI_SERVER]) {
+      infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
+      ready = FALSE;
+    }
+    /* TODO: review completeness of inspection above */
+  }
 
-  /* TODO: review completeness of inspection above */
-
-  return TRUE;                  /* Nothing missing, apparently */
+  /* Nothing missing, or ESNI not required */
+  return ready;
 }
 
 /* *** Unreferenced code begins */

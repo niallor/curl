@@ -62,7 +62,8 @@
 #include <openssl/pkcs12.h>
 #ifdef USE_ESNI
 #include <openssl/esni.h>
-#include <openssl/esnierr.h>
+/* TODO: strip following after confirming its redundancy */
+/* #include <openssl/esnierr.h> */
 #endif /* USE_ESNI */
 
 #ifdef USE_AMISSL
@@ -2731,12 +2732,16 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
     /* TODO: review appropriateness of nesting conditional blocks */
     if(data->set.tls_enable_esni) {
 
-      /* TODO: move these variables to a better place, if possible */
-      /* TODO: remember to free ESNI data object */
-      SSL_ESNI *esnikeys = NULL; /* Handle for ESNI data object */
+      /* Local variables: no need to move them */
       bool value_error = FALSE;  /* Problem flag */
       size_t asciirrlen = 0;     /* Length of STRING_ESNI_ASCIIRR */
+
+      /* TODO: move these variables to a better place (in data or conn?) */
+      /* TODO: remember to free ESNI data object */
+      SSL_ESNI *esnikeys = NULL; /* Handle for ESNI data object */
       int nesnis = 0;            /* Count of ESNI keys */
+
+      value_error = !Curl_esni_ready(data);
 
       infof(data, "Found ESNI parameters:\n");
 
@@ -2746,27 +2751,15 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
       infof(data, "  flag ssl_strict_esni %s\n",
             (data->set.tls_strict_esni ? "(SET)" : "(CLEAR)"));
 
-      if(!data->set.str[STRING_ESNI_SERVER]) {
-        infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
-        value_error = TRUE;
-      }
-      else
+      if(data->set.str[STRING_ESNI_SERVER])
         infof(data, "  STRING_ESNI_SERVER (%s)\n",
               data->set.str[STRING_ESNI_SERVER]);
 
-      if(!data->set.str[STRING_ESNI_COVER]) {
-        infof(data, "WARNING: missing value for STRING_ESNI_COVER\n");
-        value_error = TRUE;
-      }
-      else
+      if(data->set.str[STRING_ESNI_COVER])
         infof(data, "  STRING_ESNI_COVER (%s)\n",
               data->set.str[STRING_ESNI_COVER]);
 
-      if(!data->set.str[STRING_ESNI_ASCIIRR]) {
-        infof(data, "WARNING: missing value for STRING_ESNI_ASCIIRR\n");
-        value_error = TRUE;
-      }
-      else {
+      if(data->set.str[STRING_ESNI_ASCIIRR])
         infof(data, "  STRING_ESNI_ASCIIRR (%s)\n",
               data->set.str[STRING_ESNI_ASCIIRR]);
 
@@ -2983,12 +2976,6 @@ static CURLcode ossl_connect_step2(struct connectdata *conn, int sockindex)
     infof(data, "SSL connection using %s / %s\n",
           get_ssl_version_txt(BACKEND->handle),
           SSL_get_cipher(BACKEND->handle));
-
-    /*
-     * TODO:
-     * consider following code for ALPN as model for ESNI
-     * need to find out more about SSL_get0_alpn_selected()
-     */
 
 #ifdef HAS_ALPN
     /* Sets data and len to negotiated protocol, len is 0 if no protocol was
