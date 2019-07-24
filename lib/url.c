@@ -122,7 +122,10 @@ bool curl_win32_idn_to_ascii(const char *in, char **out);
 #include "strdup.h"
 #include "setopt.h"
 #include "altsvc.h"
+
+#ifdef USE_ESNI
 #include "esni.h"
+#endif
 
 /* The last 3 #include files should be in this order */
 #include "curl_printf.h"
@@ -382,10 +385,6 @@ CURLcode Curl_close(struct Curl_easy *data)
   Curl_altsvc_cleanup(data->asi);
   data->asi = NULL;
 #endif
-/* #ifdef USE_ESNI */
-/*   esni_free(data->esni); */
-/*   data->esni = NULL; */
-/* #endif */
 #if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_CRYPTO_AUTH)
   Curl_http_auth_cleanup_digest(data);
 #endif
@@ -3798,12 +3797,6 @@ static CURLcode create_conn(struct Curl_easy *data,
     /* We have decided that we want a new connection. However, we may not
        be able to do that if we have reached the limit of how many
        connections we are allowed to open. */
-
-    /*
-     * TODO: consider this might be a good place to do some ESNI stuff
-     * maybe by setting a flag to enable ESNI option later like ALPN
-     * stuff below
-     */
 
     if(conn->handler->flags & PROTOPT_ALPN_NPN) {
       /* The protocol wants it, so set the bits if enabled in the easy handle
