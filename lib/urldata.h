@@ -473,7 +473,7 @@ struct ConnectBits {
 /*    *  review afterwards. */
 /*    *\/ */
 /*   bit tls_enable_esni:1;        /\* TLS ESNI extension? *\/ */
-/*   bit tls_strict_esni:1;        /\* TLS ESNI extension: strict checking? *\/ */
+/*   bit tls_strict_esni:1;        /\* TLS ESNI extension: strict mode? *\/ */
 /* #endif */
 };
 
