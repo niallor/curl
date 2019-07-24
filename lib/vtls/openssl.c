@@ -61,6 +61,7 @@
 #include <openssl/buffer.h>
 #include <openssl/pkcs12.h>
 #ifdef USE_ESNI
+#include "esni.h"
 #include <openssl/esni.h>
 #endif /* USE_ESNI */
 
