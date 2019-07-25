@@ -1287,10 +1287,10 @@ static void ossl_close(struct ssl_connect_data *connssl)
 
 #ifdef USE_ESNI
   /* Free ESNI data */
-  if (!BACKEND->esnikeys) {
+  if(!BACKEND->esnikeys) {
     SSL_ESNI_free(BACKEND->esnikeys);
     OPENSSL_free(BACKEND->esnikeys);
-    BACKEND->esnikeys=NULL;
+    BACKEND->esnikeys = NULL;
     }
 #endif
 
