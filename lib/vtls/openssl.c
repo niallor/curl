@@ -1122,6 +1122,18 @@ static void Curl_ossl_cleanup(void)
 #ifdef HAVE_SSL_COMP_FREE_COMPRESSION_METHODS
   SSL_COMP_free_compression_methods();
 #endif
+#endif  /* OPENSSL_VERSION_NUMBER */
+
+#ifdef USE_ESNI
+  /* TODO: ascertain whether this block should be here
+   * or rather inside the OpenSSL 1.1 block above */
+
+  /* Free ESNI data */
+  if (!ESNIKEYS) {
+    SSL_ESNI_free(ESNIKEYS);
+    OPENSSL_free(ESNIKEYS);
+    ESNIKEYS=NULL;
+    }
 #endif
 
 #ifdef ENABLE_SSLKEYLOGFILE
@@ -2805,7 +2817,9 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
              * - OPENSSL_free(peer_CN)
              * Maybe look to OpenSSL s_client code.
              */
-            free(ESNIKEYS);     /* Tentative: may be leaky */
+            /* Follow example of sftcd/openssl/apps/s_client.c */
+            SSL_ESNI_free(esnikeys);
+            OPENSSL_free(esnikeys);
             ESNIKEYS = NULL;
           }
           value_error = TRUE;
