@@ -1120,18 +1120,6 @@ static void Curl_ossl_cleanup(void)
 #endif
 #endif  /* OPENSSL_VERSION_NUMBER */
 
-#ifdef USE_ESNI
-  /* TODO: ascertain whether this block should be here
-   * or rather inside the OpenSSL 1.1 block above */
-
-  /* Free ESNI data */
-  if (!ESNIKEYS) {
-    SSL_ESNI_free(ESNIKEYS);
-    OPENSSL_free(ESNIKEYS);
-    ESNIKEYS=NULL;
-    }
-#endif
-
 #ifdef ENABLE_SSLKEYLOGFILE
   if(keylog_file_fp) {
     fclose(keylog_file_fp);
@@ -1296,6 +1284,16 @@ static void ossl_close(struct ssl_connect_data *connssl)
     SSL_CTX_free(BACKEND->ctx);
     BACKEND->ctx = NULL;
   }
+
+#ifdef USE_ESNI
+  /* Free ESNI data */
+  if (!BACKEND->esnikeys) {
+    SSL_ESNI_free(BACKEND->esnikeys);
+    OPENSSL_free(BACKEND->esnikeys);
+    BACKEND->esnikeys=NULL;
+    }
+#endif
+
 }
 
 /*
