@@ -2800,8 +2800,8 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
              * Maybe look to OpenSSL s_client code.
              */
             /* Follow example of sftcd/openssl/apps/s_client.c */
-            SSL_ESNI_free(esnikeys);
-            OPENSSL_free(esnikeys);
+            SSL_ESNI_free(ESNIKEYS);
+            OPENSSL_free(ESNIKEYS);
             ESNIKEYS = NULL;
           }
           value_error = TRUE;
