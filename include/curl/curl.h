@@ -1935,17 +1935,18 @@ typedef enum {
 
   /* Bitmask to control HTTP/3 behavior. See CURLH3_* */
   CINIT(H3, LONG, 289),
+
   /* ESNI status: 1L to enable, 0L otherwise */
-  CINIT(ESNI_STATUS, LONG, 289),
+  CINIT(ESNI_STATUS, LONG, 301),
 
   /* ESNI: server to visit instead of host part of URL authority */
-  CINIT(ESNI_SERVER, STRINGPOINT, 290),
+  CINIT(ESNI_SERVER, STRINGPOINT, 302),
 
   /* ESNI: string to send (unencrypted) as SNI option */
-  CINIT(ESNI_COVER, STRINGPOINT, 291),
+  CINIT(ESNI_COVER, STRINGPOINT, 303),
 
   /* ESNI: TXT or ESNI RDATA from DNS, as base64 or hex respectively */
-  CINIT(ESNI_ASCIIRR, STRINGPOINT, 292),
+  CINIT(ESNI_ASCIIRR, STRINGPOINT, 304),
 
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
