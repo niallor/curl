@@ -1933,16 +1933,16 @@ typedef enum {
   CINIT(SASL_AUTHZID, STRINGPOINT, 289),
 
   /* ESNI status: 1L to enable, 0L otherwise */
-  CINIT(ESNI_STATUS, LONG, 300),
+  CINIT(ESNI_STATUS, LONG, 301),
 
   /* ESNI: server to visit instead of host part of URL authority */
-  CINIT(ESNI_SERVER, STRINGPOINT, 301),
+  CINIT(ESNI_SERVER, STRINGPOINT, 302),
 
   /* ESNI: string to send (unencrypted) as SNI option */
-  CINIT(ESNI_COVER, STRINGPOINT, 302),
+  CINIT(ESNI_COVER, STRINGPOINT, 303),
 
   /* ESNI: TXT or ESNI RDATA from DNS, as base64 or hex respectively */
-  CINIT(ESNI_ASCIIRR, STRINGPOINT, 303),
+  CINIT(ESNI_ASCIIRR, STRINGPOINT, 304),
 
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
