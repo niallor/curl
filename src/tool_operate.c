@@ -2110,6 +2110,29 @@ static CURLcode operate_do(struct GlobalConfig *global,
     return CURLE_FAILED_INIT;
   }
 
+#ifdef USE_ESNI
+  /* Check we have a valid set of ESNI parameters */
+  if(config->esni_status.flags.selected) {
+    /* ESNI options were found on command line */
+
+    /* TODO:consider moving in-line validation to function */
+
+    /* MUST have ESNI key data */
+    if(!config->esni_load_data) {
+      /* TODO: actually validate key data */
+      helpf(global->errors, "no ESNI key data specified!\n");
+      return CURLE_FAILED_INIT;
+    }
+
+    /* MUST have AT LEAST ONE OF server- or cover- name */
+    else if(!config->esni_cover_name &&
+            !config->esni_server_name) {
+      helpf(global->errors, "no ESNI server name specified!\n");
+      return CURLE_FAILED_INIT;
+    }
+  }
+#endif
+
   /* On WIN32 we can't set the path to curl-ca-bundle.crt
    * at compile time. So we look here for the file in two ways:
    * 1: look at the environment variable CURL_CA_BUNDLE for a path
