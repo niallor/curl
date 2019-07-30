@@ -1836,6 +1836,45 @@ static CURLcode create_transfers(struct GlobalConfig *global,
           my_setopt_str(curl, CURLOPT_ALTSVC, config->altsvc);
 #endif
 
+#ifdef USE_ESNI
+        /* only if enabled in configure */
+        if(config->esni_status.flags.selected) {
+          char *foundname = NULL;
+          long flagword = CURLESNI_ENABLE;
+
+          if(!config->esni_status.flags.relaxed)
+            flagword |= CURLESNI_STRICT;
+
+          /* warnf(config->global, */
+          /* "Attempting to set CURLOPT_ESNI_STATUS (%ld)\n",
+             flagword); */
+          my_setopt(curl, CURLOPT_ESNI_STATUS, flagword);
+
+          /* ESNI options were already checked, so load-data is set
+             as is at least one of server- and cover-name */
+          /* warnf(config->global, */
+          /* "Attempting to set CURLOPT_ESNI_ASCIIRR (%s)\n", */
+          /* config->esni_load_data); */
+          my_setopt_str(curl, CURLOPT_ESNI_ASCIIRR, config->esni_load_data);
+
+          /* Earlier checking ensures that at least one of the next two
+             has been set; if either is missing, the other must be present */
+          foundname = (config->esni_server_name) ?
+            config->esni_server_name : config->esni_cover_name;
+          /* warnf(config->global, */
+          /*       "Attempting to set CURLOPT_ESNI_SERVER (%s)\n", */
+          /*       foundname); */
+          my_setopt_str(curl, CURLOPT_ESNI_SERVER, foundname);
+
+          foundname = (config->esni_cover_name) ?
+            config->esni_cover_name : config->esni_server_name;
+          /* warnf(config->global, */
+          /*       "Attempting to set CURLOPT_ESNI_COVER (%s)\n", */
+          /*       foundname); */
+          my_setopt_str(curl, CURLOPT_ESNI_COVER, foundname);
+        }
+#endif
+
 #ifdef USE_METALINK
         if(!metalink && config->use_metalink) {
           outs->metalink_parser = metalink_parser_context_new();
