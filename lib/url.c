@@ -123,9 +123,9 @@ bool curl_win32_idn_to_ascii(const char *in, char **out);
 #include "setopt.h"
 #include "altsvc.h"
 
-#ifdef USE_ESNI
-#include "esni.h"
-#endif
+/* #ifdef USE_ESNI */
+/* #include "esni.h" */
+/* #endif */
 
 /* The last 3 #include files should be in this order */
 #include "curl_printf.h"
