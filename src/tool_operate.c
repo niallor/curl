@@ -1839,7 +1839,6 @@ static CURLcode create_transfers(struct GlobalConfig *global,
 #ifdef USE_ESNI
         /* only if enabled in configure */
         if(config->esni_status.flags.selected) {
-          char *foundname = NULL;
           long flagword = CURLESNI_ENABLE;
 
           if(!config->esni_status.flags.relaxed)
