@@ -1857,21 +1857,29 @@ static CURLcode create_transfers(struct GlobalConfig *global,
           /* config->esni_load_data); */
           my_setopt_str(curl, CURLOPT_ESNI_ASCIIRR, config->esni_load_data);
 
-          /* Earlier checking ensures that at least one of the next two
-             has been set; if either is missing, the other must be present */
-          foundname = (config->esni_server_name) ?
-            config->esni_server_name : config->esni_cover_name;
-          /* warnf(config->global, */
-          /*       "Attempting to set CURLOPT_ESNI_SERVER (%s)\n", */
-          /*       foundname); */
-          my_setopt_str(curl, CURLOPT_ESNI_SERVER, foundname);
+          /* /\* Earlier checking ensures that at least one of the next two */
+          /*    has been set; if either is missing, the other must be present *\/ */
+          /* foundname = (config->esni_server_name) ? */
+          /*   config->esni_server_name : config->esni_cover_name; */
+          /* /\* warnf(config->global, *\/ */
+          /* /\*       "Attempting to set CURLOPT_ESNI_SERVER (%s)\n", *\/ */
+          /* /\*       foundname); *\/ */
+          /* my_setopt_str(curl, CURLOPT_ESNI_SERVER, foundname); */
 
-          foundname = (config->esni_cover_name) ?
-            config->esni_cover_name : config->esni_server_name;
-          /* warnf(config->global, */
-          /*       "Attempting to set CURLOPT_ESNI_COVER (%s)\n", */
-          /*       foundname); */
-          my_setopt_str(curl, CURLOPT_ESNI_COVER, foundname);
+          if(config->esni_server_name)
+            my_setopt_str(curl, CURLOPT_ESNI_SERVER,
+                          config->esni_server_name);
+
+          /* foundname = (config->esni_cover_name) ? */
+          /*   config->esni_cover_name : config->esni_server_name; */
+          /* /\* warnf(config->global, *\/ */
+          /* /\*       "Attempting to set CURLOPT_ESNI_COVER (%s)\n", *\/ */
+          /* /\*       foundname); *\/ */
+          /* my_setopt_str(curl, CURLOPT_ESNI_COVER, foundname); */
+
+          if(config->esni_cover_name)
+            my_setopt_str(curl, CURLOPT_ESNI_COVER,
+                          config->esni_cover_name);
         }
 #endif
 
@@ -2156,19 +2164,28 @@ static CURLcode operate_do(struct GlobalConfig *global,
 
     /* TODO:consider moving in-line validation to function */
 
+    /* Save user some frustration by not quitting on first failure */
+
     /* MUST have ESNI key data */
     if(!config->esni_load_data) {
       /* TODO: actually validate key data */
       helpf(global->errors, "no ESNI key data specified!\n");
-      return CURLE_FAILED_INIT;
+      result = CURLE_FAILED_INIT;
     }
 
-    /* MUST have AT LEAST ONE OF server- or cover- name */
-    else if(!config->esni_cover_name &&
+    /* MUST have server-name */
+    /* TODO: use "hidden" in nomenclature rather than "server" */
+    else if( /* !config->esni_cover_name && */
             !config->esni_server_name) {
       helpf(global->errors, "no ESNI server name specified!\n");
-      return CURLE_FAILED_INIT;
+      result = CURLE_FAILED_INIT;
     }
+
+    /* MAY have cover-name: no need to check */
+
+    /* All validity-checking done: return now if any failed */
+    if(result != CURLE_OK)
+      return result;
   }
 #endif
 
