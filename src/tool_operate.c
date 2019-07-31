@@ -1857,25 +1857,9 @@ static CURLcode create_transfers(struct GlobalConfig *global,
           /* config->esni_load_data); */
           my_setopt_str(curl, CURLOPT_ESNI_ASCIIRR, config->esni_load_data);
 
-          /* /\* Earlier checking ensures that at least one of the next two */
-          /*    has been set; if either is missing, the other must be present *\/ */
-          /* foundname = (config->esni_server_name) ? */
-          /*   config->esni_server_name : config->esni_cover_name; */
-          /* /\* warnf(config->global, *\/ */
-          /* /\*       "Attempting to set CURLOPT_ESNI_SERVER (%s)\n", *\/ */
-          /* /\*       foundname); *\/ */
-          /* my_setopt_str(curl, CURLOPT_ESNI_SERVER, foundname); */
-
           if(config->esni_server_name)
             my_setopt_str(curl, CURLOPT_ESNI_SERVER,
                           config->esni_server_name);
-
-          /* foundname = (config->esni_cover_name) ? */
-          /*   config->esni_cover_name : config->esni_server_name; */
-          /* /\* warnf(config->global, *\/ */
-          /* /\*       "Attempting to set CURLOPT_ESNI_COVER (%s)\n", *\/ */
-          /* /\*       foundname); *\/ */
-          /* my_setopt_str(curl, CURLOPT_ESNI_COVER, foundname); */
 
           if(config->esni_cover_name)
             my_setopt_str(curl, CURLOPT_ESNI_COVER,
@@ -2175,8 +2159,7 @@ static CURLcode operate_do(struct GlobalConfig *global,
 
     /* MUST have server-name */
     /* TODO: use "hidden" in nomenclature rather than "server" */
-    else if( /* !config->esni_cover_name && */
-            !config->esni_server_name) {
+    else if(!config->esni_server_name) {
       helpf(global->errors, "no ESNI server name specified!\n");
       result = CURLE_FAILED_INIT;
     }
