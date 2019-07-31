@@ -67,8 +67,9 @@ bool Curl_esni_ready(struct Curl_easy *data)
       ready = FALSE;
     }
     if(!data->set.str[STRING_ESNI_COVER]) {
-      infof(data, "WARNING: missing value for STRING_ESNI_COVER\n");
-      ready = FALSE;
+      infof(data, "WARNING: missing value for STRING_ESNI_COVER "
+            "-- will use public_name from DNS or omit clear SNI\n");
+      /* ready = FALSE; */
     }
     if(!data->set.str[STRING_ESNI_SERVER]) {
       infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
