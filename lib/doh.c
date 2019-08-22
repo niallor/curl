@@ -371,7 +371,7 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
     /* Draft 2 uses TXT RRset and "_esni." prefix */
 
     /* Check that space is available for prefix */
-    if(strlen(hostname) > 255 - 6) /* max less strlen("_esni.") */
+    if(strlen(hostname) > (255 - 6)) /* max less strlen("_esni.") */
       goto error;
 
     /*   Allocate space for qname (max length of domain name) */
@@ -380,8 +380,8 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
       goto error;
 
     /* Build qname from '_esni.' prefix, hostname */
-    strcpy(qname, "_esni.");
-    strcat(qname, hostname);
+    strncpy(qname, "_esni.", 7);
+    strncpy(qname + strlen("_esni."), hostname, (255 - 6));
 
     /* Invoke dohprobe to run the query */
     result = dohprobe(data,
