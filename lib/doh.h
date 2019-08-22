@@ -100,9 +100,9 @@ struct dohentry {
   int numcname;
   struct cnamestore cname[DOH_MAX_CNAME];
   int numtxt;
-  struct cnamestore cname[DOH_MAX_TXT]; /* struct cnamestore may be fine */
+  struct cnamestore txt[DOH_MAX_TXT]; /* struct cnamestore may be fine */
   int numesni;
-  struct cnamestore cname[DOH_MAX_ESNI];
+  struct cnamestore esni[DOH_MAX_ESNI];
 };
 
 
