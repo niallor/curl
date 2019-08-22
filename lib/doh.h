@@ -69,7 +69,9 @@ typedef enum {
   DNS_TYPE_A = 1,
   DNS_TYPE_NS = 2,
   DNS_TYPE_CNAME = 5,
-  DNS_TYPE_AAAA = 28
+  DNS_TYPE_TXT = 16,
+  DNS_TYPE_AAAA = 28,
+  DNS_TYPE_65439 = 65439
 } DNStype;
 
 #define DOH_MAX_ADDR 24
