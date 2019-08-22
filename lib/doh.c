@@ -663,6 +663,12 @@ static DOHcode store_txt(unsigned char *doh,
   struct cnamestore *c;
   unsigned char length;
 
+  (void)doh;
+  (void)dohlen;
+  (void)index;
+  (void)c;
+  (void)length;
+
   if(d->numtxt == DOH_MAX_TXT)
     return DOH_OK; /* skip! */
 
@@ -677,6 +683,12 @@ static DOHcode store_esni(unsigned char *doh,
 {
   struct cnamestore *c;
   unsigned char length;
+
+  (void)doh;
+  (void)dohlen;
+  (void)index;
+  (void)c;
+  (void)length;
 
   if(d->numesni == DOH_MAX_ESNI)
     return DOH_OK; /* skip! */
