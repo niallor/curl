@@ -366,7 +366,7 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
    * Set esni_draft accordingly
    */
 
-  switch (esni_draft) {
+  switch(esni_draft) {
   case 2:
     /* Draft 2 uses TXT RRset and "_esni." prefix */
 
@@ -380,8 +380,8 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
       goto error;
 
     /* Build qname from '_esni.' prefix, hostname */
-    strncpy(qname, "_esni.", 6);
-    strncat(qname, hostname, (255 - 6));
+    strcpy(qname, "_esni.");
+    strcat(qname, hostname);
 
     /* Invoke dohprobe to run the query */
     result = dohprobe(data,
