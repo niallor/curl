@@ -655,6 +655,36 @@ static DOHcode store_cname(unsigned char *doh,
   return DOH_OK;
 }
 
+static DOHcode store_txt(unsigned char *doh,
+                         size_t dohlen,
+                         unsigned int index,
+                         struct dohentry *d)
+{
+  struct cnamestore *c;
+  unsigned char length;
+
+  if(d->numtxt == DOH_MAX_TXT)
+    return DOH_OK; /* skip! */
+
+  /* TODO: add real code */
+  return DOH_OK;
+}
+
+static DOHcode store_esni(unsigned char *doh,
+                          size_t dohlen,
+                          unsigned int index,
+                          struct dohentry *d)
+{
+  struct cnamestore *c;
+  unsigned char length;
+
+  if(d->numesni == DOH_MAX_ESNI)
+    return DOH_OK; /* skip! */
+
+  /* TODO: add real code */
+  return DOH_OK;
+}
+
 static DOHcode rdata(unsigned char *doh,
                      size_t dohlen,
                      unsigned short rdlength,
