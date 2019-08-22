@@ -76,6 +76,8 @@ typedef enum {
 
 #define DOH_MAX_ADDR 24
 #define DOH_MAX_CNAME 4
+#define DOH_MAX_ESNI 4          /* TODO: review */
+#define DOH_MAX_TXT 4           /* TODO: review */
 
 struct cnamestore {
   size_t len;       /* length of cname */
@@ -97,6 +99,10 @@ struct dohentry {
   struct dohaddr addr[DOH_MAX_ADDR];
   int numcname;
   struct cnamestore cname[DOH_MAX_CNAME];
+  int numtxt;
+  struct cnamestore cname[DOH_MAX_TXT]; /* struct cnamestore may be fine */
+  int numesni;
+  struct cnamestore cname[DOH_MAX_ESNI];
 };
 
 
