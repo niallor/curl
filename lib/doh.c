@@ -343,6 +343,8 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
   struct Curl_easy *data = conn->data;
   CURLcode result = CURLE_OK;
   char *qname = NULL;
+  int esni_draft = 2;           /* Default interoperating version */
+
   *waitp = TRUE; /* this never returns synchronously */
   (void)conn;
   (void)hostname;
@@ -361,39 +363,69 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
 
   /* TODO:
    * Determine version of ESNI to use from flag in data (specifically ?)
-   * Select RRtype to fetch (TXT, TYPE65439, ...) accordingly
-   *
-   * For TXT:
-   *   Allocate space for qname (6 + strlen(hostname))
-   *   Build qname from '_esni.' prefix, hostname
-   *   Invoke dohprobe(data,
-   *                   &data->req.doh.probe[1],
-   *                   DNS_TYPE_TXT,
-   *                   qname,
-   *                   data->set.str[STRING_DOH],
-   *                   data->multi,
-   *                   data->req.doh.headers);
-   *   On success (result == CURLE_OK, or ?):
-   *     copy (base64) Rdata from 1st RR in answer to data->esni_text
-   *   Otherwise:
-   *     goto error
-   *
-   * For TYPE65439:
-   *   Invoke dohprobe(data,
-   *                   &data->req.doh.probe[1],
-   *                   DNS_TYPE_65439,
-   *                   hostname,
-   *                   data->set.str[STRING_DOH],
-   *                   data->multi,
-   *                   data->req.doh.headers);
-   *   On success (result == CURLE_OK, or as before):
-   *     copy (binary) Rdata from 1st RR in answer to data->esni_decoded
-   *   Otherwise:
-   *     goto error
+   * Set esni_draft accordingly
    */
 
-  if(result == CURLE_OK)
-    return result;
+  switch (esni-draft) {
+  case 2:
+    /* Draft 2 uses TXT RRset and "_esni." prefix */
+
+    /* Check that space is available for prefix */
+    if(strlen(hostname) > 255 - 6) /* max less strlen("_esni.") */
+      goto error;
+
+    /*   Allocate space for qname (max length of domain name) */
+    qname = malloc(256);
+    if(!qname)
+      goto error;
+
+    /* Build qname from '_esni.' prefix, hostname */
+    strncpy(qname, "_esni.", 6);
+    strncat(qname, hostname, (255 - 6));
+
+    /* Invoke dohprobe to run the query */
+    result = dohprobe(data,
+                      &data->req.doh.probe[1],
+                      DNS_TYPE_TXT,
+                      qname,
+                      data->set.str[STRING_DOH],
+                      data->multi,
+                      data->req.doh.headers);
+    if(result)
+      goto error;
+
+    /* TODO:
+     * For TXT:
+     * Copy (base64) Rdata from 1st RR in answer to data->esni_text
+     */
+
+    /* For now, discard qname right here */
+    free(qname);
+    break
+
+  case 3: case 4:
+    /* Drafts 3 and 4 use TYPE65439 RRset and no prefix */
+    result = dohprobe(data,
+                      &data->req.doh.probe[1],
+                      DNS_TYPE_65439,
+                      hostname,
+                      data->set.str[STRING_DOH],
+                      data->multi,
+                      data->req.doh.headers);
+    if(result)
+      goto error;
+
+    /* TODO:
+     * For TYPE65439:
+     *     copy (binary) Rdata from 1st RR in answer to data->esni_decoded
+     */
+    break;
+
+  default:
+    goto error;
+  }
+
+  return result;
 
   error:
 
@@ -408,11 +440,10 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
 
   if(qname)
     free(qname);
-  qname = NULL;
 
-  if(result == CURLE_OK)
-    return CURLE_COULDNT_RESOLVE_HOST; /* or DOH-specific code ? */
-  return result;
+  if(result)
+    return result;
+  return CURLE_COULDNT_RESOLVE_HOST; /* or DOH-specific code ? */
 }
 #endif
 
