@@ -393,14 +393,22 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
                       data->req.doh.headers);
     if(result)
       goto error;
+    data->req.doh.pending++;
+
+    /* NOTE:
+     * In Curl_doh(), nothing else is done after invoking dohprobe()
+     * EXCEPT incrementing the doh.pending counter; for now, this seems
+     * like the right model to follow.
+     */
 
     /* TODO:
      * For TXT:
      * Copy (base64) Rdata from 1st RR in answer to data->esni_text
      */
 
-    /* For now, discard qname right here */
-    free(qname);
+    /* TODO: free qname, perhaps not right here */
+    /* free(qname); */
+
     break;
 
   case 3: case 4:
@@ -414,6 +422,7 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
                       data->req.doh.headers);
     if(result)
       goto error;
+    data->req.doh.pending++;
 
     /* TODO:
      * For TYPE65439:
@@ -676,6 +685,18 @@ static DOHcode rdata(unsigned char *doh,
     break;
   case DNS_TYPE_CNAME:
     rc = store_cname(doh, dohlen, index, d);
+    if(rc)
+      return rc;
+    break;
+  case DNS_TYPE_TXT:
+    /* Store the (base64) text without decoding */
+    rc = store_txt(doh, dohlen, index, d);
+    if(rc)
+      return rc;
+    break;
+  case DNS_TYPE_65439:
+    /* Store the binary ESNI data */
+    rc = store_esni(doh, dohlen, index, d);
     if(rc)
       return rc;
     break;
