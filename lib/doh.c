@@ -342,12 +342,11 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
 {
   struct Curl_easy *data = conn->data;
   CURLcode result = CURLE_OK;
+  char *qname = NULL;
   *waitp = TRUE; /* this never returns synchronously */
   (void)conn;
   (void)hostname;
   (void)port;
-
-  const char *qname = NULL;
 
   /* start clean, consider allocating this struct on demand */
   memset(&data->req.doh, 0, sizeof(struct dohdata));

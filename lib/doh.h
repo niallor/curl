@@ -42,6 +42,13 @@ CURLcode Curl_doh_is_resolved(struct connectdata *conn,
 
 int Curl_doh_getsock(struct connectdata *conn, curl_socket_t *socks);
 
+#ifdef USE_ESNI
+CURLcode Curl_doh_esni(struct connectdata *conn,
+                       const char *hostname,
+                       int port,
+                       int *waitp);
+#endif
+
 typedef enum {
   DOH_OK,
   DOH_DNS_BAD_LABEL,    /* 1 */
