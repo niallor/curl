@@ -401,7 +401,7 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
 
     /* For now, discard qname right here */
     free(qname);
-    break
+    break;
 
   case 3: case 4:
     /* Drafts 3 and 4 use TYPE65439 RRset and no prefix */
