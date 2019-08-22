@@ -329,6 +329,94 @@ static CURLcode dohprobe(struct Curl_easy *data,
   return result;
 }
 
+#ifdef USE_ESNI
+/*
+ * Curl_doh_esni() fetches an ESNI RRset using DOH, decodes it if necessary,
+ * links the decoded ESNI data to the current easy handle (or ?), and
+ * returns a status code.
+ */
+CURLcode Curl_doh_esni(struct connectdata *conn,
+                        const char *hostname,
+                        int port,
+                        int *waitp)
+{
+  struct Curl_easy *data = conn->data;
+  CURLcode result = CURLE_OK;
+  *waitp = TRUE; /* this never returns synchronously */
+  (void)conn;
+  (void)hostname;
+  (void)port;
+
+  const char *qname = NULL;
+
+  /* start clean, consider allocating this struct on demand */
+  memset(&data->req.doh, 0, sizeof(struct dohdata));
+
+  data->req.doh.host = hostname;
+  data->req.doh.port = port;
+  data->req.doh.headers =
+    curl_slist_append(NULL,
+                      "Content-Type: application/dns-message");
+  if(!data->req.doh.headers)
+    goto error;
+
+  /* TODO:
+   * Determine version of ESNI to use from flag in data (specifically ?)
+   * Select RRtype to fetch (TXT, TYPE65439, ...) accordingly
+   *
+   * For TXT:
+   *   Allocate space for qname (6 + strlen(hostname))
+   *   Build qname from '_esni.' prefix, hostname
+   *   Invoke dohprobe(data,
+   *                   &data->req.doh.probe[1],
+   *                   DNS_TYPE_TXT,
+   *                   qname,
+   *                   data->set.str[STRING_DOH],
+   *                   data->multi,
+   *                   data->req.doh.headers);
+   *   On success (result == CURLE_OK, or ?):
+   *     copy (base64) Rdata from 1st RR in answer to data->esni_text
+   *   Otherwise:
+   *     goto error
+   *
+   * For TYPE65439:
+   *   Invoke dohprobe(data,
+   *                   &data->req.doh.probe[1],
+   *                   DNS_TYPE_65439,
+   *                   hostname,
+   *                   data->set.str[STRING_DOH],
+   *                   data->multi,
+   *                   data->req.doh.headers);
+   *   On success (result == CURLE_OK, or as before):
+   *     copy (binary) Rdata from 1st RR in answer to data->esni_decoded
+   *   Otherwise:
+   *     goto error
+   */
+
+  if(result == CURLE_OK)
+    return result;
+
+  error:
+
+  /* TODO: confirm error-handling below meets our needs here */
+
+  curl_slist_free_all(data->req.doh.headers);
+  data->req.doh.headers = NULL;
+  curl_easy_cleanup(data->req.doh.probe[0].easy);
+  data->req.doh.probe[0].easy = NULL;
+  curl_easy_cleanup(data->req.doh.probe[1].easy);
+  data->req.doh.probe[1].easy = NULL;
+
+  if(qname)
+    free(qname);
+  qname = NULL;
+
+  if(result == CURLE_OK)
+    return CURLE_COULDNT_RESOLVE_HOST; /* or DOH-specific code ? */
+  return result;
+}
+#endif
+
 /*
  * Curl_doh() resolves a name using DOH. It resolves a name and returns a
  * 'Curl_addrinfo *' with the address information.
