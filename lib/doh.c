@@ -366,7 +366,7 @@ CURLcode Curl_doh_esni(struct connectdata *conn,
    * Set esni_draft accordingly
    */
 
-  switch (esni-draft) {
+  switch (esni_draft) {
   case 2:
     /* Draft 2 uses TXT RRset and "_esni." prefix */
 
