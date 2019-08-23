@@ -53,6 +53,9 @@
  *
  * @param data is the Curl_easy handle to inspect
  * @return TRUE if complete, FALSE otherwise
+ *
+ * TODO: consider whether ESNI parameter data needs to be per-connection
+ * 
  */
 bool Curl_esni_ready(struct Curl_easy *data)
 {
@@ -62,18 +65,26 @@ bool Curl_esni_ready(struct Curl_easy *data)
 
   if(data->set.tls_enable_esni) {
     /* ESNI enabled: look for what will be needed */
+    if(!data->set.str[STRING_ESNI_SERVER]) {
+      infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
+      /* TODO:
+       * If missing, copy from hostname.
+       * NB! Allow for multiple divers hostnames per Curl_easy handle.
+       */
+      ready = FALSE;
+    }
     if(!data->set.str[STRING_ESNI_ASCIIRR]) {
       infof(data, "WARNING: missing value for STRING_ESNI_ASCIIRR\n");
+      /* TODO:
+       * If missing, try fetching from DNS, basing QNAME on hostname.
+       * NB! Allow for multiple divers hostnames per Curl_easy handle.
+       */
       ready = FALSE;
     }
     if(!data->set.str[STRING_ESNI_COVER]) {
       infof(data, "WARNING: missing value for STRING_ESNI_COVER "
             "-- will use public_name from DNS or omit clear SNI\n");
       /* ready = FALSE; */
-    }
-    if(!data->set.str[STRING_ESNI_SERVER]) {
-      infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
-      ready = FALSE;
     }
     /* TODO: review completeness of inspection above */
   }
