@@ -55,7 +55,6 @@
  * @return TRUE if complete, FALSE otherwise
  *
  * TODO: consider whether ESNI parameter data needs to be per-connection
- * 
  */
 bool Curl_esni_ready(struct Curl_easy *data)
 {
