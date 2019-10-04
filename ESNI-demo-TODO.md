@@ -26,7 +26,6 @@ sufficient.
 | None   | Tracking | ./ESNI-demo-TODO.md                          |
 | Update | Global   | ./docs/libcurl/symbols-in-versions           |
 | Update | Global   | ./include/curl/curl.h                        |
-| Update | Lib      | ./docs/libcurl/curl\_easy\_setopt.3          |
 | Copy   | Lib      | ./docs/libcurl/opts/CURLOPT\_ESNI\_ASCIIRR.3 |
 | Copy   | Lib      | ./docs/libcurl/opts/CURLOPT\_ESNI\_COVER.3   |
 | Copy   | Lib      | ./docs/libcurl/opts/CURLOPT\_ESNI\_SERVER.3  |
@@ -57,7 +56,6 @@ sufficient.
 | libdef   | Title      | Define libcurl options for ESNI               |
 |          | Files (7)  | ./include/curl/curl.h                         |
 |          |            | ./docs/libcurl/symbols-in-versions (CURLOPT)  |
-|          |            | ./docs/libcurl/curl\_easy\_setopt.3           |
 |          |            | ./docs/libcurl/opts/CURLOPT\_ESNI\_ASCIIRR.3  |
 |          |            | ./docs/libcurl/opts/CURLOPT\_ESNI\_COVER.3    |
 |          |            | ./docs/libcurl/opts/CURLOPT\_ESNI\_SERVER.3   |
