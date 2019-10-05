@@ -1592,6 +1592,10 @@ enum dupstring {
   STRING_ESNI_COVER,            /* CURLOPT_ESNI_COVER */
   STRING_ESNI_ASCIIRR,          /* CURLOPT_ESNI_ASCIIRR */
 #endif
+  STRING_ESNI_SERVER,           /* CURLOPT_ESNI_SERVER */
+  STRING_ESNI_COVER,            /* CURLOPT_ESNI_COVER */
+  STRING_ESNI_ASCIIRR,          /* CURLOPT_ESNI_ASCIIRR */
+
   /* -- end of zero-terminated strings -- */
 
   STRING_LASTZEROTERMINATED,
