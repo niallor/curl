@@ -270,6 +270,15 @@ static const struct LongShort aliases[]= {
   {"EB", "socks5-gssapi",            ARG_BOOL},
   {"EC", "etag-save",                ARG_FILENAME},
   {"ED", "etag-compare",             ARG_FILENAME},
+#ifdef USE_ESNI
+  {"ES", "esni",                     ARG_BOOL},
+         /* "ES" is as good a choice of starting point
+          * for ESNI-related short names as any. */
+  {"ET", "esni-cover",               ARG_STRING},
+  {"EU", "esni-load",                ARG_FILENAME},
+  {"EV", "esni-server",              ARG_STRING},
+  {"EW", "strict-esni",              ARG_BOOL},
+#endif
   {"f",  "fail",                     ARG_BOOL},
   {"fa", "fail-early",               ARG_BOOL},
   {"fb", "styled-output",            ARG_BOOL},
@@ -1709,6 +1718,74 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       case 'D':
         GetStr(&config->etag_compare_file, nextarg);
         break;
+
+#ifdef USE_ESNI
+      case 'S':
+        /* --esni */
+        if(!config->esni_status.word) {
+          /* No ESNI option was parsed yet */
+          config->esni_status.flags.selected = toggle;
+          config->esni_status.flags.disabled = !toggle;
+        }
+        break;
+
+      case 'T':
+        /* --esni-cover */
+        if(!config->esni_status.flags.disabled) {
+          config->esni_status.flags.selected = TRUE; /* clamp flag up */
+          GetStr(&config->esni_cover_name, nextarg); /* save argument */
+        }
+        break;
+
+      case 'U':
+        /* --esni-load */
+        /* Allow string data or "@"-escaped filename */
+        if(!config->esni_status.flags.disabled) {
+          config->esni_status.flags.selected = TRUE; /* as before */
+          {
+            FILE *file;
+            char *filearg = nextarg;
+            if(*filearg++ == '@') {
+              GetStr(&config->esni_load_file, filearg);
+              file = fopen(filearg, FOPEN_READTEXT);
+              if(!file) {
+                warnf(global,
+                      "Couldn't read file \"%s\" "
+                      "specified for \"--esni-load\" option",
+                      filearg);
+                return PARAM_BAD_USE;
+              }
+              else {
+                err = file2string(&config->esni_load_data, file);
+                if(file && (file != stdin))
+                  fclose(file);
+                if(err)
+                  return err;
+              }
+            }
+            else {
+              GetStr(&config->esni_load_data, nextarg);
+            }
+          }
+        }
+        break;
+
+      case 'V':
+        /* --esni-server ARG_STRING */
+        if(!config->esni_status.flags.disabled) {
+          config->esni_status.flags.selected = TRUE; /* as before */
+          GetStr(&config->esni_server_name, nextarg);
+        }
+        break;
+
+      case 'W':
+        /* --strict-esni ARG_BOOL */
+        if(!config->esni_status.flags.disabled) {
+          config->esni_status.flags.selected = TRUE; /* as before */
+          config->esni_status.flags.relaxed = !toggle;
+        }
+        break;
+#endif
 
       default: /* unknown flag */
         return PARAM_OPTION_UNKNOWN;
