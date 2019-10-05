@@ -11,6 +11,9 @@ sufficient.
 -   Identify corresponding changes to be included in PR
 -   Group files needing upstream changes in goal-oriented batches
 -   Apply updates to the ESNI-demo branch, committing batch by batch
+-   Check for differences between ESNI-demo and master branched
+-   Update and commit to resolve any such differences
+-   Roll back and repackage commits as appropriate
 
 ## Changes to be included in PR
 
@@ -117,7 +120,15 @@ sufficient.
         -   src/tool\_help.c
         -   src/tool\_operate.c
     -   Build: clean
-    -   Tests: all clean but case 1456, likely due to IPv6 connectivity trouble
-    -   Demo: postponed until better IPv6 environment available
+    -   Tests: all clean but case 1456 due to IPv6 problem; clean when resolved
+    -   Demo: clean after updating wrapper script to select desirred RRset
 
+## Unexpected differences
 
+-   lib/esni.c (updated after esni-2019-09-30)
+-   lib/vtls/openssl.c (updated after esni-2019-09-30)
+-   src/tool\_cfgable.h
+-   src/tool\_help.c (obsolete use of OPENSSL_NO_ESNI)
+-   src/tool\_operate.c (updates at upstream)
+
+---
