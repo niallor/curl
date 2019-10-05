@@ -933,6 +933,11 @@ typedef enum {
 #define CURLPROTO_SMBS   (1<<27)
 #define CURLPROTO_ALL    (~0) /* enable everything */
 
+/* CURLESNI_ defines are for the CURLOPT_ESNI_STATUS option */
+#define CURLESNI_ENABLE     (1<<0)
+#define CURLESNI_STRICT     (1<<1)
+#define CURLESNI_INVALID (~((1<<2) - 1)) /* unused bits */
+
 /* long may be 32 or 64 bits, but we should never depend on anything else
    but 32 */
 #define CURLOPTTYPE_LONG          0
@@ -1937,6 +1942,18 @@ typedef enum {
 
   /* SASL authorisation identity */
   CINIT(SASL_AUTHZID, STRINGPOINT, 289),
+
+  /* ESNI status: 1L to enable, 0L otherwise */
+  CINIT(ESNI_STATUS, LONG, 290),
+
+  /* ESNI: server to visit instead of host part of URL authority */
+  CINIT(ESNI_SERVER, STRINGPOINT, 291),
+
+  /* ESNI: string to send (unencrypted) as SNI option */
+  CINIT(ESNI_COVER, STRINGPOINT, 292),
+
+  /* ESNI: TXT or ESNI RDATA from DNS, as base64 or hex respectively */
+  CINIT(ESNI_ASCIIRR, STRINGPOINT, 293),
 
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
