@@ -41,6 +41,10 @@
 #  include <proto/dos.h>
 #endif
 
+#ifdef USE_ESNI
+#  include "esni.h"
+#endif
+
 #include "strcase.h"
 
 #define ENABLE_CURLX_PRINTF
@@ -1970,6 +1974,29 @@ static CURLcode single_transfer(struct GlobalConfig *global,
         /* only if explicitly enabled in configure */
         if(config->altsvc)
           my_setopt_str(curl, CURLOPT_ALTSVC, config->altsvc);
+#endif
+
+#ifdef USE_ESNI
+        /* only if enabled in configure */
+        if(config->esni_status.flags.selected) {
+          long flagword = CURLESNI_ENABLE;
+
+          if(!config->esni_status.flags.relaxed)
+            flagword |= CURLESNI_STRICT;
+
+          my_setopt(curl, CURLOPT_ESNI_STATUS, flagword);
+
+          /* ESNI options were already checked, so load-data is set */
+          my_setopt_str(curl, CURLOPT_ESNI_ASCIIRR, config->esni_load_data);
+
+          if(config->esni_server_name)
+            my_setopt_str(curl, CURLOPT_ESNI_SERVER,
+                          config->esni_server_name);
+
+          if(config->esni_cover_name)
+            my_setopt_str(curl, CURLOPT_ESNI_COVER,
+                          config->esni_cover_name);
+        }
 #endif
 
 #ifdef USE_METALINK
