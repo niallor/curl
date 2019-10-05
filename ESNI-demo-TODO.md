@@ -14,41 +14,31 @@ sufficient.
 
 ## Changes to be included in PR
 
-| Action | Scope    | File                                         |
-|:-------|:---------|:---------------------------------------------|
-| None   | Config   | ./configure.ac                               |
-| None   | Config   | ./m4/curl-confopts.m4                        |
-| None   | Goals    | ./docs/ROADMAP.md                            |
-| None   | Later    | ./lib/doh.c                                  |
-| None   | Later    | ./lib/doh.h                                  |
-| None   | Obsolete | ./ESNI-FRAMEWORK-README.md                   |
-| None   | Other    | ./lib/vtls/wolfssl.c                         |
-| None   | Tracking | ./ESNI-demo-TODO.md                          |
-| None   | Lib      | ./lib/version.c                              |
-| None   | Lib      | ./lib/url.c                                  |
-| Update | Global   | ./docs/libcurl/symbols-in-versions           |
-| Update | Global   | ./include/curl/curl.h                        |
-| Copy   | Lib      | ./docs/libcurl/opts/CURLOPT\_ESNI\_ASCIIRR.3 |
-| Copy   | Lib      | ./docs/libcurl/opts/CURLOPT\_ESNI\_COVER.3   |
-| Copy   | Lib      | ./docs/libcurl/opts/CURLOPT\_ESNI\_SERVER.3  |
-| Copy   | Lib      | ./docs/libcurl/opts/CURLOPT\_ESNI\_STATUS.3  |
-| Copy   | Lib      | ./lib/esni.c                                 |
-| Copy   | Lib      | ./lib/esni.h                                 |
-| Update | Lib      | ./docs/libcurl/curl\_easy\_setopt.3          |
-| Update | Lib      | ./lib/Makefile.inc                           |
-| Update | Lib      | ./lib/setopt.c                               |
-| Update | Lib      | ./lib/urldata.h                              |
-| Update | Lib      | ./lib/vtls/openssl.c                         |
-| Copy   | Tool     | ./docs/cmdline-opts/esni-cover.d             |
-| Copy   | Tool     | ./docs/cmdline-opts/esni-load.d              |
-| Copy   | Tool     | ./docs/cmdline-opts/esni-server.d            |
-| Copy   | Tool     | ./docs/cmdline-opts/esni.d                   |
-| Copy   | Tool     | ./docs/cmdline-opts/strict-esni.d            |
-| Update | Tool     | ./src/tool\_cfgable.c                        |
-| Update | Tool     | ./src/tool\_cfgable.h                        |
-| Update | Tool     | ./src/tool\_getparam.c                       |
-| Update | Tool     | ./src/tool\_help.c                           |
-| Update | Tool     | ./src/tool\_operate.c                        |
+| Action | Scope  | File                                         |
+|:-------|:-------|:---------------------------------------------|
+| Update | Global | ./include/curl/curl.h                        |
+| Copy   | Lib    | ./docs/libcurl/opts/CURLOPT\_ESNI\_ASCIIRR.3 |
+| Copy   | Lib    | ./docs/libcurl/opts/CURLOPT\_ESNI\_COVER.3   |
+| Copy   | Lib    | ./docs/libcurl/opts/CURLOPT\_ESNI\_SERVER.3  |
+| Copy   | Lib    | ./docs/libcurl/opts/CURLOPT\_ESNI\_STATUS.3  |
+| Copy   | Lib    | ./lib/esni.c                                 |
+| Copy   | Lib    | ./lib/esni.h                                 |
+| Update | Lib    | ./docs/libcurl/curl\_easy\_setopt.3          |
+| Update | Lib    | ./docs/libcurl/symbols-in-versions           |
+| Update | Lib    | ./lib/Makefile.inc                           |
+| Update | Lib    | ./lib/setopt.c                               |
+| Update | Lib    | ./lib/urldata.h                              |
+| Update | Lib    | ./lib/vtls/openssl.c                         |
+| Copy   | Tool   | ./docs/cmdline-opts/esni-cover.d             |
+| Copy   | Tool   | ./docs/cmdline-opts/esni-load.d              |
+| Copy   | Tool   | ./docs/cmdline-opts/esni-server.d            |
+| Copy   | Tool   | ./docs/cmdline-opts/esni.d                   |
+| Copy   | Tool   | ./docs/cmdline-opts/strict-esni.d            |
+| Update | Tool   | ./src/tool\_cfgable.c                        |
+| Update | Tool   | ./src/tool\_cfgable.h                        |
+| Update | Tool   | ./src/tool\_getparam.c                       |
+| Update | Tool   | ./src/tool\_help.c                           |
+| Update | Tool   | ./src/tool\_operate.c                        |
 
 ## Batching
 
@@ -74,13 +64,12 @@ sufficient.
 |          |          | ./lib/vtls/openssl.c                         |
 |          |          | <hr />                                       |
 | toolcode | Title    | Implement curl tool support for ESNI         |
-|          | Files    | (11)                                         |
+|          | Files    | (10)                                         |
 |          |          | ./docs/cmdline-opts/esni-cover.d             |
 |          |          | ./docs/cmdline-opts/esni-load.d              |
 |          |          | ./docs/cmdline-opts/esni-server.d            |
 |          |          | ./docs/cmdline-opts/esni.d                   |
 |          |          | ./docs/cmdline-opts/strict-esni.d            |
-|          |          | ./docs/libcurl/symbols-in-versions ?         |
 |          |          | ./src/tool\_cfgable.c                        |
 |          |          | ./src/tool\_cfgable.h                        |
 |          |          | ./src/tool\_getparam.c                       |
@@ -91,14 +80,44 @@ sufficient.
 ## Updates
 
 -   Commit ded2d93
-    -   Files
-        -   docs/libcurl/curl_easy_setopt.3
-        -   docs/libcurl/opts/CURLOPT_ESNI_ASCIIRR.3
-        -   docs/libcurl/opts/CURLOPT_ESNI_COVER.3
-        -   docs/libcurl/opts/CURLOPT_ESNI_SERVER.3
-        -   docs/libcurl/opts/CURLOPT_ESNI_STATUS.3
+    -   Files (7)
+        -   docs/libcurl/curl\_easy\_setopt.3
+        -   docs/libcurl/opts/CURLOPT\_ESNI\_ASCIIRR.3
+        -   docs/libcurl/opts/CURLOPT\_ESNI\_COVER.3
+        -   docs/libcurl/opts/CURLOPT\_ESNI\_SERVER.3
+        -   docs/libcurl/opts/CURLOPT\_ESNI\_STATUS.3
         -   docs/libcurl/symbols-in-versions
         -   include/curl/curl.h
-    -   Builds clean
-    -   Tests clean
+    -   Build: clean
+    -   Tests: clean
+    -   Demo: none (as expected)
+
+-   Commit 81a2c59
+    -   Files (6)
+        -   lib/Makefile.inc
+        -   lib/esni.c
+        -   lib/esni.h
+        -   lib/setopt.c
+        -   lib/urldata.h
+        -   lib/vtls/openssl.c
+    -   Build: clean
+    -   Tests: clean
+    -   Demo: none (as expected)
+
+-   Commit fa0f793
+    -   Files (10)
+        -   docs/cmdline-opts/esni-cover.d
+        -   docs/cmdline-opts/esni-load.d
+        -   docs/cmdline-opts/esni-server.d
+        -   docs/cmdline-opts/esni.d
+        -   docs/cmdline-opts/strict-esni.d
+        -   src/tool\_cfgable.c
+        -   src/tool\_cfgable.h
+        -   src/tool\_getparam.c
+        -   src/tool\_help.c
+        -   src/tool\_operate.c
+    -   Build: clean
+    -   Tests: all clean but case 1456, likely due to IPv6 connectivity trouble
+    -   Demo: postponed until better IPv6 environment available
+
 
