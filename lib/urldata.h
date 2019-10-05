@@ -1537,6 +1537,11 @@ enum dupstring {
 #ifndef CURL_DISABLE_PROXY
   STRING_TEMP_URL,              /* temp URL storage for proxy use */
 #endif
+#ifdef USE_ESNI
+  STRING_ESNI_SERVER,           /* CURLOPT_ESNI_SERVER */
+  STRING_ESNI_COVER,            /* CURLOPT_ESNI_COVER */
+  STRING_ESNI_ASCIIRR,          /* CURLOPT_ESNI_ASCIIRR */
+#endif
   /* -- end of zero-terminated strings -- */
 
   STRING_LASTZEROTERMINATED,
@@ -1792,6 +1797,10 @@ struct UserDefined {
   BIT(doh); /* DNS-over-HTTPS enabled */
   BIT(doh_get); /* use GET for DoH requests, instead of POST */
   BIT(http09_allowed); /* allow HTTP/0.9 responses */
+#ifdef USE_ESNI
+  BIT(tls_enable_esni);      /* TLS ESNI extension */
+  BIT(tls_strict_esni);      /* TLS ESNI extension: strict checking */
+#endif
 };
 
 struct Names {
