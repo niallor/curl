@@ -125,10 +125,86 @@ sufficient.
 
 ## Unexpected differences
 
--   lib/esni.c (updated after esni-2019-09-30)
--   lib/vtls/openssl.c (updated after esni-2019-09-30)
--   src/tool\_cfgable.h
--   src/tool\_help.c (obsolete use of OPENSSL_NO_ESNI)
--   src/tool\_operate.c (updates at upstream)
+-   lib/esni.c (OK: include updates since tag esni-2019-09-30)
+-   lib/vtls/openssl.c (OK: include updates since esni-2019-09-30)
+-   src/tool\_cfgable.h (OK: ESNI-demo is closer to upstream than master)
+-   src/tool\_help.c (OK: correct obsolete use of OPENSSL\_NO\_ESNI)
+-   src/tool\_operate.c (OK: ESNI-demo differs only by having ESNI code)
+
+## Rollback/re-commit
+
+-   Preparation:
+
+    -   Commands:
+        `git reset b902b0632d82945636d53bec325645540c4926a6`
+        `git push --force`
+
+1.   Batch:
+
+    -   Commands:
+        `git add docs/libcurl/curl_easy_setopt.3`
+        `git add docs/libcurl/opts/CURLOPT_ESNI_*`
+        `git add docs/libcurl/symbols-in-versions`
+        `git add include/curl/curl.h`
+        `git commit`
+        `git push`
+    -   Commit: 26f7fc1b8
+    -   Files (7):
+        -   docs/libcurl/curl\_easy\_setopt.3
+        -   docs/libcurl/opts/CURLOPT\_ESNI\_ASCIIRR.3
+        -   docs/libcurl/opts/CURLOPT\_ESNI\_COVER.3
+        -   docs/libcurl/opts/CURLOPT\_ESNI\_SERVER.3
+        -   docs/libcurl/opts/CURLOPT\_ESNI\_STATUS.3
+        -   docs/libcurl/symbols-in-versions
+        -   include/curl/curl.h
+    -   Build: OK
+    -   Tests: OK
+    -   Demo: not attempted -- needs additional updates
+
+2.  Batch:
+    -   Commands
+        `git add lib/Makefile.inc`
+        `git add lib/esni.?`
+        `git add lib/setopt.c`
+        `git add lib/urldata.h`
+        `git add lib/vtls/openssl.c`
+        `git commit`
+        `git push`
+    -   Commit: 006af8a86
+    -   Files (6):
+        -   lib/Makefile.inc
+        -   lib/esni.c
+        -   lib/esni.h
+        -   lib/setopt.c
+        -   lib/urldata.h
+        -   lib/vtls/openssl.c
+    -   Build: OK
+    -   Tests: OK
+    -   Demo: not attempted -- needs additional update
+
+3.  Batch:
+    -   Commands:
+        `git add docs/cmdline-opts/*esni*.d`
+        `git add src/tool\_cfgable.?`
+        `git add src/tool\_getparam.c`
+        `git add src/tool\_help.c`
+        `git add src/tool\_operate.c`
+        `git commit`
+        `git push`
+    -   Commit: 10a59e687
+    -   Files (10)
+        -   docs/cmdline-opts/esni-cover.d
+        -   docs/cmdline-opts/esni-load.d
+        -   docs/cmdline-opts/esni-server.d
+        -   docs/cmdline-opts/esni.d
+        -   docs/cmdline-opts/strict-esni.d
+        -   src/tool\_cfgable.c
+        -   src/tool\_cfgable.h
+        -   src/tool\_getparam.c
+        -   src/tool\_help.c
+        -   src/tool\_operate.c
+    -   Build: OK
+    -   Tests: OK, except for case 1139; OK after full clean rebuild
+    -   Demo: OK
 
 ---
