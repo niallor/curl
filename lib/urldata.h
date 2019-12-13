@@ -1584,7 +1584,6 @@ enum dupstring {
 
 #endif
 #ifdef USE_ESNI
-  STRING_ESNI_SERVER,           /* CURLOPT_ESNI_SERVER */
   STRING_ESNI_COVER,            /* CURLOPT_ESNI_COVER */
   STRING_ESNI_ASCIIRR,          /* CURLOPT_ESNI_ASCIIRR */
 #endif
@@ -1848,7 +1847,6 @@ struct UserDefined {
                                 recipients */
 #ifdef USE_ESNI
   BIT(tls_enable_esni);      /* TLS ESNI extension */
-  BIT(tls_strict_esni);      /* TLS ESNI extension: strict checking */
 #endif
 };
 
