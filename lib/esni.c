@@ -64,14 +64,6 @@ bool Curl_esni_ready(struct Curl_easy *data)
 
   if(data->set.tls_enable_esni) {
     /* ESNI enabled: look for what will be needed */
-    if(!data->set.str[STRING_ESNI_SERVER]) {
-      infof(data, "WARNING: missing value for STRING_ESNI_SERVER\n");
-      /*
-       * If missing, copy from hostname.
-       * NB! Allow for multiple divers hostnames per Curl_easy handle.
-       */
-      /* ready = FALSE; */
-    }
     if(!data->set.str[STRING_ESNI_ASCIIRR]) {
       infof(data, "WARNING: missing value for STRING_ESNI_ASCIIRR\n");
       /* TODO:

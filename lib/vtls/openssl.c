@@ -2899,17 +2899,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
       /* Came this far, so ssl_enable_esni must be set */
       infof(data, "  flag ssl_enable_esni (SET)\n");
 
-      infof(data, "  flag ssl_strict_esni %s\n",
-            (data->set.tls_strict_esni ? "(SET)" : "(CLEAR)"));
-
-      if(data->set.str[STRING_ESNI_SERVER]) {
-        infof(data, "  STRING_ESNI_SERVER (%s)\n",
-              data->set.str[STRING_ESNI_SERVER]);
-        srvname = data->set.str[STRING_ESNI_SERVER];
-      }
-      else
-        /* Over-riding option not set: use host name */
-        srvname = conn->host.name;
+      srvname = conn->host.name;
 
       if(srvname)
         infof(data, "  Effective server name (%s)\n", srvname);
@@ -2973,7 +2963,7 @@ static CURLcode ossl_connect_step1(struct connectdata *conn, int sockindex)
                             data->set.str[STRING_ESNI_COVER],
                             ESNIKEYS, /* decoded just now */
                             NESNIS,   /* decoded just now */
-                            data->set.tls_strict_esni /* flag bit  */
+                            TRUE      /* always use strict mode */
                             )) {
           failf(data, "ESNI: failed to configure "
                 "encrypted server name (ESNI) TLS extension\n");
