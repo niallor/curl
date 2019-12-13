@@ -1981,17 +1981,10 @@ static CURLcode single_transfer(struct GlobalConfig *global,
         if(config->esni_status.flags.selected) {
           long flagword = CURLESNI_ENABLE;
 
-          if(!config->esni_status.flags.relaxed)
-            flagword |= CURLESNI_STRICT;
-
           my_setopt(curl, CURLOPT_ESNI_STATUS, flagword);
 
           /* ESNI options were already checked, so load-data is set */
           my_setopt_str(curl, CURLOPT_ESNI_ASCIIRR, config->esni_load_data);
-
-          if(config->esni_server_name)
-            my_setopt_str(curl, CURLOPT_ESNI_SERVER,
-                          config->esni_server_name);
 
           if(config->esni_cover_name)
             my_setopt_str(curl, CURLOPT_ESNI_COVER,

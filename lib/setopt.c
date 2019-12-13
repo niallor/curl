@@ -2751,14 +2751,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
       return CURLE_BAD_FUNCTION_ARGUMENT; /* MUST be zero */
     if(arg & CURLESNI_ENABLE) {
       data->set.tls_enable_esni = TRUE;
-      data->set.tls_strict_esni = (bool) (arg & CURLESNI_STRICT);
     }
-    break;
-  case CURLOPT_ESNI_SERVER:
-    argptr = va_arg(param, char *);
-    result = Curl_setstropt(&data->set.str[STRING_ESNI_SERVER], argptr);
-    if(result)
-      return result;
     break;
   case CURLOPT_ESNI_COVER:
     argptr = va_arg(param, char *);
