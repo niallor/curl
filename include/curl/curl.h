@@ -1964,14 +1964,11 @@ typedef enum {
   /* ESNI status: 1L to enable, 0L otherwise */
   CINIT(ESNI_STATUS, LONG, 290),
 
-  /* ESNI: server to visit instead of host part of URL authority */
-  CINIT(ESNI_SERVER, STRINGPOINT, 291),
-
   /* ESNI: string to send (unencrypted) as SNI option */
-  CINIT(ESNI_COVER, STRINGPOINT, 292),
+  CINIT(ESNI_COVER, STRINGPOINT, 291),
 
   /* ESNI: TXT or ESNI RDATA from DNS, as base64 or hex respectively */
-  CINIT(ESNI_ASCIIRR, STRINGPOINT, 293),
+  CINIT(ESNI_ASCIIRR, STRINGPOINT, 292),
 
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
