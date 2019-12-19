@@ -454,7 +454,7 @@ Curl_addrinfo *Curl_doh(struct connectdata *conn,
      /* FOR NOW: since we don't process the result yet,
         it would be nice to see what's going on ... */
      /* && */
-     /* (!data->set.string[STRING_ESNI_ASCIIRR]) */
+     /* (!data->set.str[STRING_ESNI_ASCIIRR]) */
      ) {
     /* create ESNI TXT request */
     result = dohprobepfx(data, &data->req.doh.probe[DOH_PROBE_SLOT_ESNI_TXT],
@@ -1102,6 +1102,36 @@ doh2ai(const struct dohentry *de, const char *hostname, int port)
   return firstai;
 }
 
+static char *
+doh2et(const struct dohentry *de, const char *hostname, int port)
+{
+  char *p, *aggrdata = NULL;
+  size_t aggrsz = 0;
+  int i;
+
+  (void) hostname;
+  (void) port;
+
+  for(i = 0; i < de->num_esni_txt; i++)
+    aggrsz += de->esni_txt[i].allocsize;
+
+  if(!aggrsz)
+    return NULL;
+
+  aggrdata = calloc(1, aggrsz);
+  if(!aggrdata)
+    return NULL;
+
+  for(i = 0, p = aggrdata; i < de->num_esni_txt; i++) {
+    if(i)
+      *p++ = ';';       /* separate each string from the one before */
+    strcpy(p, de->esni_txt[i].alloc); /* copy string */
+    p += de->esni_txt[i].len;         /* update cursor */
+  }
+
+  return aggrdata;
+}
+
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
 static const char *type2name(DNStype dnstype)
 {
@@ -1185,9 +1215,14 @@ CURLcode Curl_doh_is_resolved(struct connectdata *conn,
       /* we have an address, of one kind or other */
       struct Curl_dns_entry *dns;
       struct Curl_addrinfo *ai;
+      char *et;
 
       infof(data, "DOH Host name: %s\n", data->req.doh.host);
       showdoh(data, &de);
+
+      et = doh2et(&de, data->req.doh.host, data->req.doh.port);
+      if((et) &&(!data->set.str[STRING_ESNI_ASCIIRR]))
+        data->set.str[STRING_ESNI_ASCIIRR] = et;
 
       ai = doh2ai(&de, data->req.doh.host, data->req.doh.port);
       if(!ai) {
