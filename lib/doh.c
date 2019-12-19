@@ -731,7 +731,7 @@ static void init_dohentry(struct dohentry *de)
   de->ttl = INT_MAX;
 }
 
-/* TODO: identify relevant unit tests and update for extra arg */
+/* Unit test 1650 */
 UNITTEST DOHcode doh_decode(unsigned char *doh,
                             size_t dohlen,
                             DNStype dnstype,
