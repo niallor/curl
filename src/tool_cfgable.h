@@ -283,14 +283,12 @@ struct OperationConfig {
     struct {
       unsigned int disabled : 1;  /* Set by --no-esni option */
       unsigned int selected : 1;  /* Set by any other ESNI-related option */
-      unsigned int relaxed : 1;   /* Set by --no-strict-esni */
     } flags;
   } esni_status;
   char *esni_cover_name;          /* Set by --esni-cover option */
   char *esni_load_file;           /* Filename, set by --esni-load option */
   char *esni_load_data;           /* ESNI RDATA as base64 or hex string,
                                    * set by --esni-load option */
-  char *esni_server_name;         /* Set by --esni-server option */
   SSL_ESNI *ssl_esni;             /* TODO:
                                      decide whether this is needed here */
 #endif

@@ -63,17 +63,25 @@ typedef enum {
   DNS_TYPE_A = 1,
   DNS_TYPE_NS = 2,
   DNS_TYPE_CNAME = 5,
+  DNS_TYPE_TXT = 16,
   DNS_TYPE_AAAA = 28,
   DNS_TYPE_DNAME = 39           /* RFC6672 */
 } DNStype;
 
 #define DOH_MAX_ADDR 24
 #define DOH_MAX_CNAME 4
+#define DOH_MAX_ESNI_TXT 4
 
 struct cnamestore {
   size_t len;       /* length of cname */
   char *alloc;      /* allocated pointer */
   size_t allocsize; /* allocated size */
+};
+
+struct txtstore {
+  size_t len;                /* length of text */
+  unsigned char *alloc;      /* allocated pointer */
+  size_t allocsize;          /* allocated size */
 };
 
 struct dohaddr {
@@ -87,21 +95,29 @@ struct dohaddr {
 struct dohentry {
   unsigned int ttl;
   int numaddr;
+  char *prefix;             /* UGLY hack: end-run around doh_decode */
   struct dohaddr addr[DOH_MAX_ADDR];
   int numcname;
   struct cnamestore cname[DOH_MAX_CNAME];
+  int num_esni_txt;
+  struct txtstore esni_txt[DOH_MAX_ESNI_TXT];
 };
 
 
 #ifdef DEBUGBUILD
-DOHcode doh_encode(const char *host,
-                   DNStype dnstype,
-                   unsigned char *dnsp, /* buffer */
-                   size_t len,  /* buffer size */
-                   size_t *olen); /* output length */
+#define doh_encode(host, dnstype, dnsp, len, olen) \
+  (doh_encodepfx(host, NULL, dnstype, dnsp, len, olen))
+DOHcode doh_encodepfx(const char *host,
+                      const char *prefix,
+                      DNStype dnstype,
+                      unsigned char *dnsp, /* buffer */
+                      size_t len,  /* buffer size */
+                      size_t *olen); /* output length */
 DOHcode doh_decode(unsigned char *doh,
                    size_t dohlen,
                    DNStype dnstype,
+                   /* might better add prefix argument here ? */
+                   /* would test code then need changing ? */
                    struct dohentry *d);
 void de_cleanup(struct dohentry *d);
 #endif

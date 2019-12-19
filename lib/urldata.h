@@ -543,6 +543,10 @@ enum doh_slots {
   /*   DOH_PROBE_SLOT_FOOBAR_TXT, */
   /* #endif */
 
+#ifdef USE_ESNI
+  DOH_PROBE_SLOT_ESNI_TXT,      /* ESNI draft 02 uses (TXT, "_esni") */
+#endif
+
   /* AFTER all slot definitions, establish how many we have */
   DOH_PROBE_SLOTS
 };
@@ -556,6 +560,7 @@ struct dohresponse {
 struct dnsprobe {
   CURL *easy;
   int dnstype;
+  char *prefix;                /* specific to request, like dnstype */
   unsigned char dohbuffer[512];
   size_t dohlen;
   struct dohresponse serverdoh;
@@ -1538,7 +1543,6 @@ enum dupstring {
   STRING_TEMP_URL,              /* temp URL storage for proxy use */
 #endif
 #ifdef USE_ESNI
-  STRING_ESNI_SERVER,           /* CURLOPT_ESNI_SERVER */
   STRING_ESNI_COVER,            /* CURLOPT_ESNI_COVER */
   STRING_ESNI_ASCIIRR,          /* CURLOPT_ESNI_ASCIIRR */
 #endif
@@ -1799,7 +1803,6 @@ struct UserDefined {
   BIT(http09_allowed); /* allow HTTP/0.9 responses */
 #ifdef USE_ESNI
   BIT(tls_enable_esni);      /* TLS ESNI extension */
-  BIT(tls_strict_esni);      /* TLS ESNI extension: strict checking */
 #endif
 };
 

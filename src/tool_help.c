@@ -432,10 +432,6 @@ static const struct helptxt helptext[] = {
    "Specify unencrypted SNI public/cover name to use"},
   {"    --esni-load <filename>",
    "Specify file to load ESNIKeys data from (until DNS lookup code is ready)"},
-  {"    --esni-server <domain name>",
-   "Specify server where target URL is hosted"},
-  {"    --strict-esni",
-   "Specify whether to insist that server cert match ESNI name"},
 #endif
   {"-Y, --speed-limit <speed>",
    "Stop transfers slower than this"},

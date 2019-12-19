@@ -76,15 +76,24 @@ static const char *doh_strerror(DOHcode code)
 
 /* @unittest 1655
  */
-UNITTEST DOHcode doh_encode(const char *host,
-                            DNStype dnstype,
-                            unsigned char *dnsp, /* buffer */
-                            size_t len,  /* buffer size */
-                            size_t *olen) /* output length */
+UNITTEST DOHcode doh_encodepfx(const char *host,
+                               const char *prefix,
+                               DNStype dnstype,
+                               unsigned char *dnsp, /* buffer */
+                               size_t len,  /* buffer size */
+                               size_t *olen) /* output length */
 {
   const size_t hostlen = strlen(host);
   unsigned char *orig = dnsp;
-  const char *hostp = host;
+  const size_t preflen = prefix ? strlen(prefix) : 0;
+  size_t expected_len;
+  int i;
+
+  /* For C89 ... */
+  char *fragment[2];
+  int fragments = 2;
+  fragment[0] = (char *) prefix;
+  fragment[1] = (char *) host;
 
   /* The expected output length is 16 bytes more than the length of
    * the QNAME-encoding of the host name.
@@ -108,10 +117,12 @@ UNITTEST DOHcode doh_encode(const char *host,
    * the overall length by one.
    */
 
-  size_t expected_len;
   DEBUGASSERT(hostlen);
-  expected_len = 12 + 1 + hostlen + 4;
+  expected_len = 12 + hostlen + preflen + 1 + 4;
   if(host[hostlen-1]!='.')
+    expected_len++;
+
+  if((preflen) && (prefix[preflen-1]!='.'))
     expected_len++;
 
   if(expected_len > (256 + 16)) /* RFCs 1034, 1035 */
@@ -134,27 +145,31 @@ UNITTEST DOHcode doh_encode(const char *host,
   *dnsp++ = '\0'; /* ARCOUNT */
 
   /* encode each label and store it in the QNAME */
-  while(*hostp) {
-    size_t labellen;
-    char *dot = strchr(hostp, '.');
-    if(dot)
-      labellen = dot - hostp;
-    else
-      labellen = strlen(hostp);
-    if((labellen > 63) || (!labellen)) {
-      /* label is too long or too short, error out */
-      *olen = 0;
-      return DOH_DNS_BAD_LABEL;
-    }
-    /* label is non-empty, process it */
-    *dnsp++ = (unsigned char)labellen;
-    memcpy(dnsp, hostp, labellen);
-    dnsp += labellen;
-    hostp += labellen;
-    /* advance past dot, but only if there is one */
-    if(dot)
-      hostp++;
-  } /* next label */
+  for(i = 0; i < fragments; i++) {
+    char *hostp = (char *)fragment[i];
+    if(hostp)
+      while(*hostp) {
+        size_t labellen;
+        char *dot = strchr(hostp, '.');
+        if(dot)
+          labellen = dot - hostp;
+        else
+          labellen = strlen(hostp);
+        if((labellen > 63) || (!labellen)) {
+          /* label is too long or too short, error out */
+          *olen = 0;
+          return DOH_DNS_BAD_LABEL;
+        }
+        /* label is non-empty, process it */
+        *dnsp++ = (unsigned char)labellen;
+        memcpy(dnsp, hostp, labellen);
+        dnsp += labellen;
+        hostp += labellen;
+        /* advance past dot, but only if there is one */
+        if(dot)
+          hostp++;
+      } /* next label */
+  }     /* next fragment */
 
   *dnsp++ = 0; /* append zero-length label for root */
 
@@ -172,6 +187,9 @@ UNITTEST DOHcode doh_encode(const char *host,
   DEBUGASSERT(*olen == expected_len);
   return DOH_OK;
 }
+
+#define doh_encode(host, dnstype, dnsp, len, olen) \
+  (doh_encodepfx(host, NULL, dnstype, dnsp, len, olen))
 
 static size_t
 doh_write_cb(void *contents, size_t size, size_t nmemb, void *userp)
@@ -220,24 +238,27 @@ do {                                      \
     goto error;                           \
 } while(0)
 
-static CURLcode dohprobe(struct Curl_easy *data,
-                         struct dnsprobe *p, DNStype dnstype,
-                         const char *host,
-                         const char *url, CURLM *multi,
-                         struct curl_slist *headers)
+static CURLcode dohprobepfx(struct Curl_easy *data,
+                            struct dnsprobe *p, DNStype dnstype,
+                            const char *prefix,
+                            const char *host,
+                            const char *url, CURLM *multi,
+                            struct curl_slist *headers)
 {
   struct Curl_easy *doh = NULL;
   char *nurl = NULL;
   CURLcode result = CURLE_OK;
   timediff_t timeout_ms;
-  DOHcode d = doh_encode(host, dnstype, p->dohbuffer, sizeof(p->dohbuffer),
-                         &p->dohlen);
+  DOHcode d = doh_encodepfx(host, prefix, dnstype,
+                            p->dohbuffer, sizeof(p->dohbuffer),
+                            &p->dohlen);
   if(d) {
     failf(data, "Failed to encode DOH packet [%d]\n", d);
     return CURLE_OUT_OF_MEMORY;
   }
 
   p->dnstype = dnstype;
+  p->prefix = (char *) prefix;
   p->serverdoh.memory = NULL;
   /* the memory will be grown as needed by realloc in the doh_write_cb
      function */
@@ -375,6 +396,9 @@ static CURLcode dohprobe(struct Curl_easy *data,
   return result;
 }
 
+#define dohprobe(data, p, dnstype, host, url, multi, headers) \
+  (dohprobepfx(data, p, dnstype, NULL, host, url, multi, headers))
+
 /*
  * Curl_doh() resolves a name using DOH. It resolves a name and returns a
  * 'Curl_addrinfo *' with the address information.
@@ -423,6 +447,26 @@ Curl_addrinfo *Curl_doh(struct connectdata *conn,
       goto error;
     data->req.doh.pending++;
   }
+
+#ifdef USE_ESNI
+  if((data->set.tls_enable_esni) /* ESNI was requested */
+     /* TODO: skip if we have the material already */
+     /* FOR NOW: since we don't process the result yet,
+        it would be nice to see what's going on ... */
+     /* && */
+     /* (!data->set.string[STRING_ESNI_ASCIIRR]) */
+     ) {
+    /* create ESNI TXT request */
+    result = dohprobepfx(data, &data->req.doh.probe[DOH_PROBE_SLOT_ESNI_TXT],
+                         DNS_TYPE_TXT, "_esni",
+                         hostname, data->set.str[STRING_DOH],
+                         data->multi, data->req.doh.headers);
+    if(result)
+      goto error;
+    data->req.doh.pending++;
+  }
+#endif
+
   return NULL;
 
   error:
@@ -580,11 +624,61 @@ static DOHcode store_cname(unsigned char *doh,
   return DOH_OK;
 }
 
-static DOHcode rdata(unsigned char *doh,
-                     size_t dohlen,
-                     unsigned short rdlength,
-                     unsigned short type,
-                     int index,
+static DOHcode store_esni_txt(unsigned char *doh,
+                              size_t dohlen,
+                              unsigned int index,
+                              unsigned short rdlength,
+                              struct dohentry *d)
+{
+  struct txtstore *c;
+  size_t strlen;
+  size_t rdlen;
+  unsigned char *src;
+  unsigned char *dst;
+
+  rdlen = rdlength;
+  src = doh + index;
+
+  if(d->num_esni_txt == DOH_MAX_ESNI_TXT)
+    return DOH_OK; /* skip! */
+
+  c = &d->esni_txt[d->num_esni_txt++];
+
+  if(index + rdlength > dohlen)
+    return DOH_DNS_OUT_OF_RANGE;
+
+  /* Required allocation will be
+   * rdlen
+   * -n, the count of RFC1035 <character-string>s contained in RDATA
+   * +1 for the final '\0'
+  */
+  c->allocsize = rdlen;        /* not less than required allocation */
+
+  c->alloc = calloc(1, c->allocsize);
+  if(!c->alloc)
+    return DOH_OUT_OF_MEM;
+
+  for(dst = c->alloc; rdlen; rdlen -= strlen) {
+    strlen = *src++;            /* pick up the string length */
+    rdlen--;                    /* count down for the length byte */
+    if(strlen > rdlen)
+      return DOH_DNS_OUT_OF_RANGE;
+    memcpy(dst, src, strlen);   /* copy a <character-string> */
+    src += strlen;              /* advance source cursor */
+    dst += strlen;              /* advance destination cursor */
+  }                             /* next <character-string> */
+
+  *dst++ = '\0';                /* closing null */
+  c->len = dst - c->alloc;      /* strlen() + 1 */
+
+  return DOH_OK;
+}
+
+static DOHcode rdata(unsigned char *doh,      /* DOH response buffer */
+                     size_t dohlen,           /* -- its length */
+                     unsigned short rdlength, /* length of RDATA */
+                     unsigned short type,     /* TYPE of RR */
+                     int index,               /* RDATA offset into buffer */
                      struct dohentry *d)
 {
   /* RDATA
@@ -613,6 +707,14 @@ static DOHcode rdata(unsigned char *doh,
     if(rc)
       return rc;
     break;
+  case DNS_TYPE_TXT:
+    if((d->prefix) && (!strcmp(d->prefix, "_esni"))) {
+      /* Context: type TXT, prefix "_esni" */
+      rc = store_esni_txt(doh, dohlen, index, rdlength, d);
+      if(rc)
+        return rc;
+    }
+    break;
   case DNS_TYPE_DNAME:
     /* explicit for clarity; just skip; rely on synthesized CNAME  */
     break;
@@ -629,10 +731,12 @@ static void init_dohentry(struct dohentry *de)
   de->ttl = INT_MAX;
 }
 
-
+/* TODO: identify relevant unit tests and update for extra arg */
 UNITTEST DOHcode doh_decode(unsigned char *doh,
                             size_t dohlen,
                             DNStype dnstype,
+                            /* TODO: extra arg */
+                            /* char *prefix, */
                             struct dohentry *d)
 {
   unsigned char rcode;
@@ -695,8 +799,8 @@ UNITTEST DOHcode doh_decode(unsigned char *doh,
       return DOH_DNS_OUT_OF_RANGE;
 
     ttl = get32bit(doh, index);
-    if(ttl < d->ttl)
-      d->ttl = ttl;
+    if(ttl < d->ttl)            /* Shorter than limit so far ? */
+      d->ttl = ttl;             /* Yes: keep the shorter one */
     index += 4;
 
     if(dohlen < (index + 2))
@@ -769,11 +873,58 @@ UNITTEST DOHcode doh_decode(unsigned char *doh,
 }
 
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
+static char *bin2hex(char *dst, size_t *dstlen,
+                     unsigned char *src, size_t srclen,
+                     size_t truncate)
+{
+  const char hex[] = "0123456789ABCDEF";
+  size_t req;
+  char *p = dst;
+
+  if(!truncate || truncate > srclen) {
+    truncate = srclen;
+  }
+
+  req = 1 + 2 * truncate;
+  if((!p) || (*dstlen < req)) {
+    if(!p)
+      p = malloc(req);
+    else if(*dstlen < req)
+      p = realloc(dst, req);
+    if(p) {
+      *dstlen = req;
+      dst = p;
+    }
+  }
+
+  if((!*dstlen) || (!dst)) {
+    if(dst)
+      free(dst);
+    return NULL;
+  }
+
+  if(*dstlen < req)
+    truncate = (*dstlen - 1) / 2;
+
+  while(truncate--) {
+    *dst++ = hex[(255 & *src)>>4];
+    *dst++ = hex[(15 & *src++)];
+  }
+  *dst = '\0';
+  return p;
+}
+
 static void showdoh(struct Curl_easy *data,
                     struct dohentry *d)
 {
   int i;
-  infof(data, "TTL: %u seconds\n", d->ttl);
+  size_t truncate = 32;
+  size_t repr;
+  char *tail;
+  char *display = NULL;
+  size_t displen;
+
+ infof(data, "TTL: %u seconds\n", d->ttl);
   for(i = 0; i < d->numaddr; i++) {
     struct dohaddr *a = &d->addr[i];
     if(a->type == DNS_TYPE_A) {
@@ -803,6 +954,34 @@ static void showdoh(struct Curl_easy *data,
   for(i = 0; i < d->numcname; i++) {
     infof(data, "CNAME: %s\n", d->cname[i].alloc);
   }
+  for(i = 0; i < d->num_esni_txt; i++) {
+    CURLcode rc;
+    size_t declen;
+    unsigned char *decbuf = NULL;
+    infof(data, "DOH esni_txt: (%d) %s\n",
+          strlen((char *)d->esni_txt[i].alloc),
+          d->esni_txt[i].alloc);
+    rc = Curl_base64_decode((const char *)d->esni_txt[i].alloc,
+                            &decbuf, &declen);
+    if(!rc) {
+      display = bin2hex(display, &displen,
+                        decbuf, declen,
+                        truncate);
+      if(display) {
+        repr = strlen(display) / 2;
+        tail = (char *) ((repr < declen) ? "..." : "");
+        infof(data, "     decoded: (%3d/%-3d) %s%s\n",
+              repr, declen, display, tail);
+      }
+    }
+
+    else
+      infof(data, "DOH esni_txt not decoded (%d)\n", rc);
+
+    Curl_safefree(decbuf);
+  }
+  if(display)
+    free(display);
 }
 #else
 #define showdoh(x,y)
@@ -926,7 +1105,17 @@ doh2ai(const struct dohentry *de, const char *hostname, int port)
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
 static const char *type2name(DNStype dnstype)
 {
-  return (dnstype == DNS_TYPE_A)?"A":"AAAA";
+  switch(dnstype) {
+  case DNS_TYPE_A:
+    return "A";
+  case DNS_TYPE_AAAA:
+    return "AAAA";
+  case DNS_TYPE_TXT:
+    return "TXT";
+  default:
+    return "(unsupported)";
+  /* return (dnstype == DNS_TYPE_A)?"A":"AAAA"; */
+  }
 }
 #endif
 
@@ -935,6 +1124,9 @@ UNITTEST void de_cleanup(struct dohentry *d)
   int i = 0;
   for(i = 0; i < d->numcname; i++) {
     free(d->cname[i].alloc);
+  }
+  for(i = 0; i < d->num_esni_txt; i++) {
+    free(d->esni_txt[i].alloc);
   }
 }
 
@@ -955,6 +1147,7 @@ CURLcode Curl_doh_is_resolved(struct connectdata *conn,
     DOHcode rc[DOH_PROBE_SLOTS];
     struct dohentry de;
     int slot;
+    char *prefix = NULL;
     /* remove DOH handles from multi handle and close them */
     for(slot = 0; slot < DOH_PROBE_SLOTS; slot++) {
       curl_multi_remove_handle(data->multi, data->req.doh.probe[slot].easy);
@@ -963,6 +1156,14 @@ CURLcode Curl_doh_is_resolved(struct connectdata *conn,
     /* parse the responses, create the struct and return it! */
     init_dohentry(&de);
     for(slot = 0; slot < DOH_PROBE_SLOTS; slot++) {
+      prefix = data->req.doh.probe[slot].prefix;
+      de.prefix = prefix;       /* ? UGLY hack: need context for decoding */
+      infof(data,
+            (prefix ?
+             "DOH: slot %d, prefix '%s', buffer size %d\n" :
+             "DOH: slot %d, prefix %p, buffer size %d\n"),
+            slot, prefix,
+            data->req.doh.probe[slot].serverdoh.size);
       rc[slot] = doh_decode(data->req.doh.probe[slot].serverdoh.memory,
                             data->req.doh.probe[slot].serverdoh.size,
                             data->req.doh.probe[slot].dnstype,
@@ -972,6 +1173,10 @@ CURLcode Curl_doh_is_resolved(struct connectdata *conn,
         infof(data, "DOH: %s type %s for %s\n", doh_strerror(rc[slot]),
               type2name(data->req.doh.probe[slot].dnstype),
               data->req.doh.host);
+      }
+      else {
+        infof(data, "DOH: slot %d, rc %d, ttl %d\n",
+              slot, rc[slot], de.ttl);
       }
     } /* next slot */
 

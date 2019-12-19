@@ -168,8 +168,6 @@ static void free_config_fields(struct OperationConfig *config)
 #ifdef USE_ESNI
   Curl_safefree(config->ssl_esni);
   config->ssl_esni = NULL;
-  Curl_safefree(config->esni_server_name);
-  config->esni_server_name = NULL;
   Curl_safefree(config->esni_load_data);
   config->esni_load_data = NULL;
   Curl_safefree(config->esni_load_file);
