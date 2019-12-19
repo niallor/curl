@@ -10,7 +10,7 @@ build-openssl-and-curl:
       - apt install -y build-essential dnsutils git
       - BUILDDIR=$PWD
       - INST_DIR=`mktemp -d`
-      - EDITION_TAG=demo
+      - EDITION_TAG=2019-12-18
       #
       # -- build openssl -------------------------
       - git clone --branch $EDITION_TAG https://github.com/niallor/openssl
@@ -34,5 +34,8 @@ build-openssl-and-curl:
       - ./configure --with-ssl=$INST_DIR --enable-esni --enable-debug
       - make
       #
-      # -- run curl ESNI demo
-      - LD_LIBRARY_PATH=$INST_DIR/lib src/curl --verbose --esni --doh-url https://cloudflare-dns.com/dns-query --head https://encryptedsni.com/
+      # -- install and run curl ESNI demo
+      - mkdir -p $INST_DIR/bin
+      - install extras/curl-esni $INST_DIR/bin/
+      - export PATH="$INST_DIR/bin:$PATH"
+      - ESNI_COVER="" ESNI_PROFILE=DRAFT2 curl-esni https://only.esni.defo.ie
