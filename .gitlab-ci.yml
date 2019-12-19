@@ -1,0 +1,41 @@
+stages:
+  - build
+
+build-openssl-and-curl:
+    image: debian:buster
+    stage: build
+    script:
+      - apt update -y
+      - apt upgrade -y
+      - apt install -y build-essential dnsutils git
+      - BUILDDIR=$PWD
+      - INST_DIR=`mktemp -d`
+      - EDITION_TAG=2019-12-18
+      #
+      # -- build openssl -------------------------
+      - git clone --branch $EDITION_TAG https://github.com/niallor/openssl
+      - cd openssl
+      - ./config --prefix=$INST_DIR
+      - make
+      - make install
+      #
+      # -- openssl-specific stuff belongs somewhere else
+      # - export LD_LIBRARY_PATH="$BUILDDIR/openssl"
+      # - ./apps/openssl help
+      # - cd esnistuff
+      # - make
+      # - sed -i 's,TOP=$HOME/code/openssl,TOP='$BUILDDIR'/openssl,' testclient.sh
+      # - ./testclient.sh -H ietf.org
+      #
+      # -- build curl ----------------------------
+      - apt install -y autoconf libtool
+      - cd $BUILDDIR
+      - ./buildconf
+      - ./configure --with-ssl=$INST_DIR --enable-esni --enable-debug
+      - make
+      #
+      # -- install and run curl ESNI demo
+      - mkdir -p $INST_DIR/bin
+      - install extras/curl-esni $INST_DIR/bin/
+      - export PATH="$INST_DIR/bin:$PATH"
+      - ESNI_COVER="" ESNI_PROFILE=DRAFT2 curl-esni https://only.esni.defo.ie
