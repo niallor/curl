@@ -1756,7 +1756,7 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
               }
               else {
                 err = file2string(&config->esni_load_data, file);
-                if(file && (file != stdin))
+                if(file != stdin)
                   fclose(file);
                 if(err)
                   return err;
