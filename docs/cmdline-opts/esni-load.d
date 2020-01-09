@@ -1,11 +1,20 @@
 Long: esni-load
 Help: File to load ESNIKeys data from
-Arg: <filename>
+Arg: <string/@file>
 Protocols: TLS
 ---
 
-Specify file containing ESNIkeys data, for use (eg. when debugging)
-instead of fetching this data from the DNS.
+Specify ESNIkeys data as a string using hexadecimal or base-64
+encoding for use (eg. for privacy reasons, or prior to data being
+available in DNS) instead of fetching these data from the DNS.
+
+The value used on the command line may be either the encoded string
+itself or the '@'-escaped name of a text file containing the string.
+
+Multiple ESNIkeys data structures may be specified using hexadecimal
+encoding by simply concatenating the individual encoded strings, or
+using base-64 encoding by using a semicolon between each individual
+encoded string and the following one.
 
 Implies --esni.
 
