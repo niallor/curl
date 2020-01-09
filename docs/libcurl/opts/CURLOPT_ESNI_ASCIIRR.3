@@ -35,10 +35,17 @@ be enabled by explicitly telling configure with \fB--enable-esni\fP. You are
 advised to not ship this in production before the experimental label is
 removed.
 .SH DESCRIPTION
-Pass in a pointer to a string representing, as base64 or hex, the RDATA
-of the ESNI public key data published in the DNS for the target virtual host.
-These data are REQUIRED if ESNI processing is requested (by setting
-CURLOPT_ESNI_STATUS).
+Pass in a pointer to a string representing, in base64 or hexadecimal
+encoding, one or more ESNI public key data structures to be used for
+authenticating the TLS connection.  For ESNI processing, these data
+are REQUIRED, and must either be specified using this option, or
+fetched automatically from the DNS by a query to the service
+identified by CURLOPT_DOH_URL.
+
+Multiple ESNI public key data structures may be specified using
+hexadecimal encoding by simply concatenating the individual encoded
+strings, or using base-64 encoding by using a semicolon between each
+individual encoded string and the following one.
 .SH DEFAULT
 NULL. No key data are specified.
 .SH PROTOCOLS
@@ -59,3 +66,4 @@ To be added in a FUTURE release
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
 .BR CURLOPT_ESNI_STATUS "(3), " CURLOPT_ESNI_COVER "(3), "
+.BR CURLOPT_DOH_URL "(3), "
