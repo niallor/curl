@@ -1,30 +1,82 @@
 # TLS: ESNI support in curl and libcurl
 
+
+
+
 ## Summary
 
 **ESNI** means **Encrypted Server Name Indication**, a TLS 1.3
 extension which is currently the subject of an
 [IETF Draft][tlsesni].
 
-This file is intended to show the latest current state of ESNI support
-in **curl** and **libcurl**.
+This file is intended to show the current state of ESNI support in
+**curl** and **libcurl**.
 
-At end of August 2019, an [experimental fork of curl][niallorcurl],
-built using an [experimental fork of OpenSSL][sftcdopenssl], which in
-turn provided an implementation of ESNI, was demonstrated
-interoperating with a server belonging to the [DEfO
-Project][defoproj].
+An [experimental fork of curl][niallorcurl], when built using an
+ESNI-capable TLS backend (such as this [experimental fork of
+OpenSSL][sftcdopenssl]), provides a proof of concept for ESNI support,
+and has been demonstrated interoperating with a server belonging to
+the [DEfO Project][defoproj].
 
 Further sections here describe
 
--   resources needed for building and demonstrating **curl** support
-    for ESNI,
+-   TODO items,
 
 -   progress to date,
 
--   TODO items, and
+-   resources needed for building and demonstrating **curl** support
+    for ESNI, and
 
 -   additional details of specific stages of the progress.
+
+## TODO
+
+-   Identify architecturally correct per-connection or per-host
+    propagation path for ESNI data fetched from DNS.
+
+-   (WIP) Work with OpenSSL community to finalize ESNI API.
+
+-   Track OpenSSL ESNI API in libcurl
+
+-   Identify and implement any changes needed for CMake.
+
+-   Optimize existing build-time checking of available resources.
+
+-   Encourage ESNI support work on other TLS backends.
+
+-   Extend build-time checking of available resources to
+    accommodate other TLS backends as these become available.
+
+## Progress
+
+### ESNI-demo (PR 4468, Oct 2019 onwards)
+
+-   Add libcurl options to set ESNI parameters.
+
+-   Add support code to propagate parameters to TLS backend
+
+-   Add curl tool command-line options to set ESNI parameters.
+
+-   (Jan 2020) Remove certain libcurl and command-line options
+    identified as unnecessary.
+
+-   (Jan 2020) Extend DoH functions so that published ESNI parameters
+    can be retrieved from DNS instead of being required as options.
+
+### PR 4011 (Jun 2019) included in curl release 7.67.0 (Oct 2019)
+
+-   Details [below](#pr4011);
+
+-   New **curl** feature: `CURL_VERSION_ESNI`;
+
+-   New configuration option: `--enable-esni`;
+
+-   Build-time check for availability of resources needed for ESNI
+    support;
+
+-   Pre-processor symbol `USE_ESNI` for conditional compilation of
+    ESNI support code, subject to configuration option and
+    availability of needed resources.
 
 ## Resources needed
 
@@ -53,49 +105,6 @@ The following set of resources is currently known to be available.
 |      |              |                               | Tag *esni-2019-08-30* (superseded by *ESNI-demo*) |
 |      | instructions | [ESNI-README][niallorreadme]  |                                                   |
 
-## Progress
-
-### ESNI-demo (PR 4468, Oct 2019)
-
--   Add libcurl options to set ESNI parameters.
-
--   Add support code to propagate parameters to TLS backend
-
--   Add curl tool command line options to set ESNI parameters.
-
-### PR 4011 (Jun 2019) expected in curl release 7.67.0 (Oct 2019)
-
--   Details [below](#pr4011);
-
--   New **curl** feature: `CURL_VERSION_ESNI`;
-
--   New configuration option: `--enable-esni`;
-
--   Build-time check for availability of resources needed for ESNI
-    support;
-
--   Pre-processor symbol `USE_ESNI` for conditional compilation of
-    ESNI support code, subject to configuration option and
-    availability of needed resources.
-
-## TODO
-
--   (WIP) Extend DoH functions so that published ESNI parameters can be
-    retrieved from DNS instead of being required as options.
-
--   (WIP) Work with OpenSSL community to finalize ESNI API.
-
--   Track OpenSSL ESNI API in libcurl
-
--   Identify and implement any changes needed for CMake.
-
--   Optimize existing build-time checking of available resources.
-
--   Encourage ESNI support work on other TLS/SSL backends.
-
--   Extend build-time checking of available resources to
-    accommodate other TLS/SSL backends as thes become available.
-
 ## Additional detail
 
 ### ESNI-demo (PR 4468)
@@ -108,33 +117,32 @@ The following set of resources is currently known to be available.
 
         -   `CURLOPT_ESNI_ASCIIRR`
         -   `CURLOPT_ESNI_COVER`
-        -   `CURLOPT_ESNI_SERVER`
         -   `CURLOPT_ESNI_STATUS`
 
 -   Implement libcurl support for ESNI
+
+    -   ESNI key data, fetched using DoH or specified as an option, is
+        propagated to an ESNI-capable TLS backend.
 
 -   Implement curl tool support for ESNI
 
     -   New command-line options with associated man pages:
 
         -   `--esni`\
-            (boolean: on unless first ESNI option is `--no-esni`)
+            (boolean: off if first ESNI option is `--no-esni`)
 
         -   `--esni-cover=HOSTNAME` (cover name to send as SNI)
 
-        -   `--esni-load=ESNIKEYS` (Base64, hex, or binary file)
-
-        -   `--esni-server=HOSTNAME`\
-            (over-rides URL hostname as name to send as encrypted SNI)
-
-        -   `--strict-esni` (boolean: off by default)
+        -   `--esni-load=ESNIKEYS` (Base64 or hex literal, or file)
 
 -   Update documentation file, *docs/ESNI.md*
 
 -   Limitations not covered by TODO list:
 
-    -   ESNI parameters must be discovered externally and passed to
-        *libcurl* as options instead of being fetched from the DNS.
+    -   A per-host or per-connection propagation path for ESNI
+        parameter data fetched using DoH needs to be identified for
+        use instead of overloading the CURLOPT\_ESNI\_ASCIIRR string
+        in the easy handle.
 
     -   Book-keeping for new options needs real release number
         instead of `DUMMY`.
