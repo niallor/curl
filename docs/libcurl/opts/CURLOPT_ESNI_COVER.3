@@ -35,8 +35,9 @@ be enabled by explicitly telling configure with \fB--enable-esni\fP. You are
 advised to not ship this in production before the experimental label is
 removed.
 .SH DESCRIPTION
-Passes a pointer to a string to be used as the value of the TLS SNI option
-when the ESNI option is being used. This must be a valid hostname.
+Passes a pointer to a (dummy) string to be used as the value of the
+TLS SNI option when the ESNI option is being used. This should be a
+valid hostname.
 .SH DEFAULT
 None.
 .SH EXAMPLE

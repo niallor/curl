@@ -36,10 +36,16 @@ advised to not ship this in production before the experimental label is
 removed.
 .SH DESCRIPTION
 Sets bit requesting that the ESNI option be used when setting up a TLS
-session to a remote ESNI-aware server.  Additional data, currently
-specified using additional options, are needed to identify the (cleartext)
-value to be used in the TLS SNI option, and the public key for authenticating
-the connection.
+session to a remote ESNI-aware server.
+
+Other bits in this word are reserved for future use and must be zero.
+
+Either CURLOPT_ESNI_ASCIIRR or CURLOPT_DOH_URL respectively must also
+be set to specify, or to allow retrieval from the DNS of, public key
+data for authenticating the TLS connection.
+
+Optionally, CURLOPT_ESNI_COVER may be used to specify a (dummy)
+cleartext domain name to use in the TLS SNI option.
 .SH DEFAULT
 ZERO. ESNI processing is disabled.
 .SH PROTOCOLS
@@ -60,3 +66,4 @@ To be added in a FUTURE release
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
 .BR CURLOPT_ESNI_COVER "(3), " CURLOPT_ESNI_ASCIIRR "(3), "
+.BR CURLOPT_DOH_URL "(3), "

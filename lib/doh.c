@@ -873,6 +873,7 @@ UNITTEST DOHcode doh_decode(unsigned char *doh,
 }
 
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
+#ifdef USE_ESNI
 static char *bin2hex(char *dst, size_t *dstlen,
                      unsigned char *src, size_t srclen,
                      size_t truncate)
@@ -913,16 +914,19 @@ static char *bin2hex(char *dst, size_t *dstlen,
   *dst = '\0';
   return p;
 }
+#endif
 
 static void showdoh(struct Curl_easy *data,
                     struct dohentry *d)
 {
   int i;
+#ifdef USE_ESNI
   size_t truncate = 32;
   size_t repr;
   char *tail;
   char *display = NULL;
   size_t displen;
+#endif
 
  infof(data, "TTL: %u seconds\n", d->ttl);
   for(i = 0; i < d->numaddr; i++) {
@@ -954,6 +958,7 @@ static void showdoh(struct Curl_easy *data,
   for(i = 0; i < d->numcname; i++) {
     infof(data, "CNAME: %s\n", d->cname[i].alloc);
   }
+#ifdef USE_ESNI
   for(i = 0; i < d->num_esni_txt; i++) {
     CURLcode rc;
     size_t declen;
@@ -982,6 +987,7 @@ static void showdoh(struct Curl_easy *data,
   }
   if(display)
     free(display);
+#endif
 }
 #else
 #define showdoh(x,y)
@@ -1102,6 +1108,7 @@ doh2ai(const struct dohentry *de, const char *hostname, int port)
   return firstai;
 }
 
+#ifdef USE_ESNI
 static char *
 doh2et(const struct dohentry *de, const char *hostname, int port)
 {
@@ -1131,6 +1138,7 @@ doh2et(const struct dohentry *de, const char *hostname, int port)
 
   return aggrdata;
 }
+#endif
 
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
 static const char *type2name(DNStype dnstype)
@@ -1215,14 +1223,18 @@ CURLcode Curl_doh_is_resolved(struct connectdata *conn,
       /* we have an address, of one kind or other */
       struct Curl_dns_entry *dns;
       struct Curl_addrinfo *ai;
+#ifdef USE_ESNI
       char *et;
+#endif
 
       infof(data, "DOH Host name: %s\n", data->req.doh.host);
       showdoh(data, &de);
 
+#ifdef USE_ESNI
       et = doh2et(&de, data->req.doh.host, data->req.doh.port);
       if((et) &&(!data->set.str[STRING_ESNI_ASCIIRR]))
         data->set.str[STRING_ESNI_ASCIIRR] = et;
+#endif
 
       ai = doh2ai(&de, data->req.doh.host, data->req.doh.port);
       if(!ai) {
