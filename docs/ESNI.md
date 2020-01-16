@@ -1,8 +1,5 @@
 # TLS: ESNI support in curl and libcurl
 
-
-
-
 ## Summary
 
 **ESNI** means **Encrypted Server Name Indication**, a TLS 1.3
@@ -25,7 +22,7 @@ Further sections here describe
 -   progress to date,
 
 -   resources needed for building and demonstrating **curl** support
-    for ESNI, and
+    for ESNI, including instructions, and
 
 -   additional details of specific stages of the progress.
 
@@ -36,13 +33,18 @@ Further sections here describe
 
 -   (WIP) Work with OpenSSL community to finalize ESNI API.
 
--   Track OpenSSL ESNI API in libcurl
+-   (WIP) Track OpenSSL ESNI API in libcurl
+
+-   (WIP) Track progress on IETF ESNI draft
 
 -   Identify and implement any changes needed for CMake.
 
 -   Optimize existing build-time checking of available resources.
 
 -   Encourage ESNI support work on other TLS backends.
+
+-   Explore how c-ares might be used instead of DOH for retrieving
+    ESNI parameters from DNS.
 
 -   Extend build-time checking of available resources to
     accommodate other TLS backends as these become available.
@@ -91,19 +93,84 @@ you will need
 -   an environment for building and running **curl**, and at least
     building **OpenSSL**;
 
--   a server, supporting ESNI, against which to run a demonstration
-    and perhaps a specific target URL;
+-   a target URL, hosted on a server supporting ESNI, against which 
+    to run a demonstration;
+
+-   a server, running DOH, from which to retrieve ESNI parameters
+    for the target URL; and
 
 -   some instructions.
 
 The following set of resources is currently known to be available.
 
-| Set  | Component    | Location                      | Remarks                                           |
-|:-----|:-------------|:------------------------------|:--------------------------------------------------|
-| DEfO | TLS library  | [sftcd/openssl][sftcdopenssl] | Tag *esni-2019-08-30* avoids bleeding edge        |
-|      | curl fork    | [niallor/curl][niallorcurl]   | Branch *ESNI-demo*                                |
-|      |              |                               | Tag *esni-2019-08-30* (superseded by *ESNI-demo*) |
-|      | instructions | [ESNI-README][niallorreadme]  |                                                   |
+| Set  | Component       | Location                          | Remarks                           |
+|:-----|:----------------|:----------------------------------|:----------------------------------|
+| DEfO | TLS library     | [sftcd/openssl][sftcdopenssl]     | Development repository            |
+|      |                 | [niallor/openssl][nialloropenssl] | Tag *demo* lags development so as |
+|      |                 |                                   | to avoid "bleeding edge" effect   |
+|      | curl fork       | [niallor/curl][niallorcurl]       | Branch *ESNI-demo*                |
+| curl | DOH server list | [curl wiki][curlwikidoh]          |                                   |
+|      | instructions    | here below                        |                                   |
+
+### Instructions for building curl with ESNI support
+
+First take a look at the files *docs/INSTALL.md* and GIT-INFO,
+and ensure that the packages mentioned in the latter are available.
+
+The sequence of commands shown below is an example of how a curl
+executable with ESNI support might be built and demonstrated on a
+Linux system.
+
+```
+# Set up and populate a work area
+cd `mktemp -d`
+WORK=$PWD
+mkdir installed
+git clone --branch demo https://github.com/niallor/openssl
+git clone --branch ESNI-demo https://github.com/niallor/curl
+
+# Build OpenSSL
+cd $WORK/openssl
+./config --prefix=$WORK/installed
+make
+
+# Optionally run the OpenSSL test suite
+make test
+
+# Make OpenSSL components available for building curl
+make install_sw
+
+# Build curl
+cd $WORK/curl
+./buildconf
+./configure \
+    --disable-shared \
+    --enable-debug \
+    --enable-maintainer-mode \
+    --with-ssl=$WORK/installed \
+    --enable-esni
+make
+
+# Set up run-time environment
+export LD_LIBRARY_PATH=$WORK/installed/lib
+
+# Optionally run the curl test suite
+make test
+
+# Demonstrate curl support of ESNI, using ESNI parameters
+# retrieved using DOH from some one of the DOH servers listed
+# at https://github.com/curl/curl/wiki/DNS-over-HTTPS
+
+# For example:
+$DOH_URL=https://doh.powerdns.org/
+
+src/curl \
+    --verbose \
+    --doh-url $DOH_URL \
+    --esni \
+    --head \
+    https://encryptedsni.com/
+```
 
 ## Additional detail
 
@@ -135,7 +202,7 @@ The following set of resources is currently known to be available.
 
         -   `--esni-load=ESNIKEYS` (Base64 or hex literal, or file)
 
--   Update documentation file, *docs/ESNI.md*
+-   Update this documentation file, *docs/ESNI.md*
 
 -   Limitations not covered by TODO list:
 
@@ -187,10 +254,13 @@ IETF Draft: [Encrypted Server Name Indication for TLS 1.3][tlsesni]
 
 ---
 
-[tlsesni]:		https://datatracker.ietf.org/doc/draft-ietf-tls-esni/
-[esniworks]:	https://blog.cloudflare.com/encrypted-sni/
-[corebug]:		https://blog.cloudflare.com/esni/
-[defoproj]:		https://defo.ie/
-[sftcdopenssl]: https://github.com/sftcd/openssl/
-[niallorcurl]:	https://github.com/niallor/curl/
-[niallorreadme]: https://github.com/niallor/curl/blob/master/ESNI-README.md
+
+
+[tlsesni]:		  https://datatracker.ietf.org/doc/draft-ietf-tls-esni/
+[esniworks]:	  https://blog.cloudflare.com/encrypted-sni/
+[corebug]:		  https://blog.cloudflare.com/esni/
+[defoproj]:		  https://defo.ie/
+[sftcdopenssl]:   https://github.com/sftcd/openssl/
+[nialloropenssl]: https://github.com/niallor/openssl/
+[niallorcurl]:	  https://github.com/niallor/curl/
+[curlwikidoh]:    https://github.com/curl/curl/wiki/DNS-over-HTTPS
