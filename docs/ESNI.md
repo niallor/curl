@@ -172,9 +172,6 @@ src/curl \
     https://encryptedsni.com/
 ```
 
--   Extend build-time checking of available resources to
-    accommodate other TLS/SSL backends as thes become available.
-
 ## Additional detail
 
 ### ESNI-demo (PR 4468)
