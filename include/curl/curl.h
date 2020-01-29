@@ -1970,6 +1970,15 @@ typedef enum {
   /* ESNI: TXT or ESNI RDATA from DNS, as base64 or hex respectively */
   CINIT(ESNI_ASCIIRR, STRINGPOINT, 292),
 
+  /* ESNI status: 1L to enable, 0L otherwise */
+  CURLOPT(CURLOPT_ESNI_STATUS, CURLOPTTYPE_LONG, 291),
+
+  /* ESNI: string to send (unencrypted) as SNI option */
+  CURLOPT(CURLOPT_ESNI_COVER, CURLOPTTYPE_STRINGPOINT, 292),
+
+  /* ESNI: TXT or ESNI RDATA from DNS, as base64 or hex respectively */
+  CURLOPT(CURLOPT_ESNI_ASCIIRR, CURLOPTTYPE_STRINGPOINT, 293),
+
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 
