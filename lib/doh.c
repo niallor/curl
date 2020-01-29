@@ -238,35 +238,20 @@ do {                                      \
     goto error;                           \
 } while(0)
 
-<<<<<<< HEAD
-static CURLcode dohprobepfx(struct Curl_easy *data,
-                            struct dnsprobe *p, DNStype dnstype,
-                            const char *prefix,
-                            const char *host,
-                            const char *url, CURLM *multi,
-                            struct curl_slist *headers)
-=======
 static CURLcode dohprobe(struct Curl_easy *data,
                          struct dnsprobe *p, DNStype dnstype,
                          const char *prefix,
                          const char *host,
                          const char *url, CURLM *multi,
                          struct curl_slist *headers)
->>>>>>> DoH: added RFC8552 prefix support
 {
   struct Curl_easy *doh = NULL;
   char *nurl = NULL;
   CURLcode result = CURLE_OK;
   timediff_t timeout_ms;
-<<<<<<< HEAD
-  DOHcode d = doh_encodepfx(host, prefix, dnstype,
-                            p->dohbuffer, sizeof(p->dohbuffer),
-                            &p->dohlen);
-=======
   DOHcode d = doh_encode(host, prefix, dnstype,
                          p->dohbuffer, sizeof(p->dohbuffer),
                          &p->dohlen);
->>>>>>> DoH: added RFC8552 prefix support
   if(d) {
     failf(data, "Failed to encode DOH packet [%d]\n", d);
     return CURLE_OUT_OF_MEMORY;
@@ -691,11 +676,11 @@ static DOHcode store_esni_txt(unsigned char *doh,
   return DOH_OK;
 }
 
-static DOHcode rdata(unsigned char *doh,      /* DOH response buffer */
-                     size_t dohlen,           /* -- its length */
-                     unsigned short rdlength, /* length of RDATA */
-                     unsigned short type,     /* TYPE of RR */
-                     int index,               /* RDATA offset into buffer */
+static DOHcode rdata(unsigned char *doh,
+                     size_t dohlen,
+                     unsigned short rdlength,
+                     unsigned short type,
+                     int index,
                      struct dohentry *d)
 {
   /* RDATA
@@ -945,7 +930,7 @@ static void showdoh(struct Curl_easy *data,
   size_t displen;
 #endif
 
- infof(data, "TTL: %u seconds\n", d->ttl);
+  infof(data, "TTL: %u seconds\n", d->ttl);
   for(i = 0; i < d->numaddr; i++) {
     struct dohaddr *a = &d->addr[i];
     if(a->type == DNS_TYPE_A) {
