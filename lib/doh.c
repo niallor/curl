@@ -76,12 +76,12 @@ static const char *doh_strerror(DOHcode code)
 
 /* @unittest 1655
  */
-UNITTEST DOHcode doh_encodepfx(const char *host,
-                               const char *prefix,
-                               DNStype dnstype,
-                               unsigned char *dnsp, /* buffer */
-                               size_t len,  /* buffer size */
-                               size_t *olen) /* output length */
+UNITTEST DOHcode doh_encode(const char *host,
+                            const char *prefix,
+                            DNStype dnstype,
+                            unsigned char *dnsp, /* buffer */
+                            size_t len,  /* buffer size */
+                            size_t *olen) /* output length */
 {
   const size_t hostlen = strlen(host);
   unsigned char *orig = dnsp;
@@ -238,20 +238,35 @@ do {                                      \
     goto error;                           \
 } while(0)
 
+<<<<<<< HEAD
 static CURLcode dohprobepfx(struct Curl_easy *data,
                             struct dnsprobe *p, DNStype dnstype,
                             const char *prefix,
                             const char *host,
                             const char *url, CURLM *multi,
                             struct curl_slist *headers)
+=======
+static CURLcode dohprobe(struct Curl_easy *data,
+                         struct dnsprobe *p, DNStype dnstype,
+                         const char *prefix,
+                         const char *host,
+                         const char *url, CURLM *multi,
+                         struct curl_slist *headers)
+>>>>>>> DoH: added RFC8552 prefix support
 {
   struct Curl_easy *doh = NULL;
   char *nurl = NULL;
   CURLcode result = CURLE_OK;
   timediff_t timeout_ms;
+<<<<<<< HEAD
   DOHcode d = doh_encodepfx(host, prefix, dnstype,
                             p->dohbuffer, sizeof(p->dohbuffer),
                             &p->dohlen);
+=======
+  DOHcode d = doh_encode(host, prefix, dnstype,
+                         p->dohbuffer, sizeof(p->dohbuffer),
+                         &p->dohlen);
+>>>>>>> DoH: added RFC8552 prefix support
   if(d) {
     failf(data, "Failed to encode DOH packet [%d]\n", d);
     return CURLE_OUT_OF_MEMORY;
@@ -431,7 +446,8 @@ Curl_addrinfo *Curl_doh(struct connectdata *conn,
   if(conn->ip_version != CURL_IPRESOLVE_V6) {
     /* create IPv4 DOH request */
     result = dohprobe(data, &data->req.doh.probe[DOH_PROBE_SLOT_IPADDR_V4],
-                      DNS_TYPE_A, hostname, data->set.str[STRING_DOH],
+                      DNS_TYPE_A, NULL, hostname,
+                      data->set.str[STRING_DOH],
                       data->multi, data->req.doh.headers);
     if(result)
       goto error;
@@ -441,7 +457,8 @@ Curl_addrinfo *Curl_doh(struct connectdata *conn,
   if(conn->ip_version != CURL_IPRESOLVE_V4) {
     /* create IPv6 DOH request */
     result = dohprobe(data, &data->req.doh.probe[DOH_PROBE_SLOT_IPADDR_V6],
-                      DNS_TYPE_AAAA, hostname, data->set.str[STRING_DOH],
+                      DNS_TYPE_AAAA, NULL, hostname,
+                      data->set.str[STRING_DOH],
                       data->multi, data->req.doh.headers);
     if(result)
       goto error;

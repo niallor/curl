@@ -565,7 +565,7 @@ struct dohresponse {
 struct dnsprobe {
   CURL *easy;
   int dnstype;
-  char *prefix;                /* specific to request, like dnstype */
+  char *prefix;                 /* specific to request, like dnstype */
   unsigned char dohbuffer[512];
   size_t dohlen;
   struct dohresponse serverdoh;
