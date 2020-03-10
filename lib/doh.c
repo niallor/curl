@@ -188,9 +188,6 @@ UNITTEST DOHcode doh_encode(const char *host,
   return DOH_OK;
 }
 
-#define doh_encode(host, dnstype, dnsp, len, olen) \
-  (doh_encodepfx(host, NULL, dnstype, dnsp, len, olen))
-
 static size_t
 doh_write_cb(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -395,9 +392,6 @@ static CURLcode dohprobe(struct Curl_easy *data,
   Curl_close(&doh);
   return result;
 }
-
-#define dohprobe(data, p, dnstype, host, url, multi, headers) \
-  (dohprobepfx(data, p, dnstype, NULL, host, url, multi, headers))
 
 /*
  * Curl_doh() resolves a name using DOH. It resolves a name and returns a
@@ -733,12 +727,10 @@ static void init_dohentry(struct dohentry *de)
   de->ttl = INT_MAX;
 }
 
-/* Unit test 1650 */
+
 UNITTEST DOHcode doh_decode(unsigned char *doh,
                             size_t dohlen,
                             DNStype dnstype,
-                            /* TODO: extra arg */
-                            /* char *prefix, */
                             struct dohentry *d)
 {
   unsigned char rcode;

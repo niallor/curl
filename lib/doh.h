@@ -114,8 +114,6 @@ DOHcode doh_encode(const char *host,
 DOHcode doh_decode(unsigned char *doh,
                    size_t dohlen,
                    DNStype dnstype,
-                   /* might better add prefix argument here ? */
-                   /* would test code then need changing ? */
                    struct dohentry *d);
 void de_cleanup(struct dohentry *d);
 #endif
