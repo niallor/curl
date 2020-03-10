@@ -1952,23 +1952,6 @@ typedef enum {
 
   /* allow RCPT TO command to fail for some recipients */
   CURLOPT(CURLOPT_MAIL_RCPT_ALLLOWFAILS, CURLOPTTYPE_LONG, 290),
-  /* ESNI status: 1L to enable, 0L otherwise */
-  CURLOPT(CURLOPT_ESNI_STATUS, CURLOPTTYPE_LONG, 290),
-
-  /* ESNI: string to send (unencrypted) as SNI option */
-  CURLOPT(CURLOPT_ESNI_COVER, CURLOPTTYPE_STRINGPOINT, 291),
-
-  /* ESNI: TXT or ESNI RDATA from DNS, as base64 or hex respectively */
-  CURLOPT(CURLOPT_ESNI_ASCIIRR, CURLOPTTYPE_STRINGPOINT, 292),
-
-  /* ESNI status: 1L to enable, 0L otherwise */
-  CINIT(ESNI_STATUS, LONG, 290),
-
-  /* ESNI: string to send (unencrypted) as SNI option */
-  CINIT(ESNI_COVER, STRINGPOINT, 291),
-
-  /* ESNI: TXT or ESNI RDATA from DNS, as base64 or hex respectively */
-  CINIT(ESNI_ASCIIRR, STRINGPOINT, 292),
 
   /* ESNI status: 1L to enable, 0L otherwise */
   CURLOPT(CURLOPT_ESNI_STATUS, CURLOPTTYPE_LONG, 291),
