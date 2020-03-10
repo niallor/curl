@@ -10,7 +10,7 @@ build-openssl-and-curl:
       - apt install -y build-essential dnsutils git
       - BUILDDIR=$PWD
       - INST_DIR=`mktemp -d`
-      - EDITION_TAG=2019-12-18
+      - EDITION_TAG=demo
       #
       # -- build openssl -------------------------
       - git clone --branch $EDITION_TAG https://github.com/niallor/openssl
