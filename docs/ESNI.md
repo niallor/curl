@@ -2,9 +2,18 @@
 
 ## Summary
 
-**ESNI** means **Encrypted Server Name Indication**, a TLS 1.3
-extension which is currently the subject of an
-[IETF Draft][tlsesni].
+**ESNI** means **Encrypted Server Name Indication**, a formerly
+proposed TLS 1.3 extension, documented in earlier versions of the
+[IETF Draft][tlsesni], which now documents a more comprehensive
+extension, known as **Encrypted Client Hello** (**ECH**).
+
+**This file is now obsolete**, and will likely be removed in the
+near future.
+
+Implementation of ECH for *libcurl* and *curl* is described in
+[ECH.md](./ECH.md).
+
+---
 
 This file is intended to show the current state of ESNI support in
 **curl** and **libcurl**.

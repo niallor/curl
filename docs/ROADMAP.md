@@ -19,13 +19,19 @@ DNS-over-TLS
 
  Similar to DNS-over-HTTPS. Could share quite a lot of generic code.
 
-ESNI (Encrypted SNI)
---------------------
+ECH (Encrypted Client Hello), formerly ESNI (Encrypted SNI)
+-----------------------------------------------------------
+
+ IETF TLS WG initially considered specifying a TLS extension for
+ "bare" ESNI.  A different approach was later considered preferable,
+ whereby the entire Client Hello message would be encrypted.
 
  See Daniel's post on [Support of Encrypted
  SNI](https://curl.haxx.se/mail/lib-2019-03/0000.html) on the mailing list.
 
- Initial work exists in https://github.com/curl/curl/pull/4011
+ [Initial work](https://github.com/curl/curl/pull/4011) follows the
+ "bare" ESNI design; refactoring to implement ECH is [work in
+ progress](https://github.com/niallor/curl/tree/ECH-WIP).
 
 thread-safe `curl_global_init()`
 --------------------------------
