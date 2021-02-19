@@ -127,7 +127,7 @@ IETF ECH Draft: [Encrypted Server Name Indication for TLS
 1.3][tlsesni]
 
 IETF SVCB Draft: [Service binding and parameter specification via the
-DNS][[svcbhttps]]
+DNS][svcbhttps]
 
 ---
 
