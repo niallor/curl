@@ -3129,6 +3129,8 @@ typedef struct curl_version_info_data curl_version_info_data;
 #define CURL_VERSION_GSASL        (1<<29) /* libgsasl is supported */
 #define CURL_VERSION_THREADSAFE   (1<<30) /* libcurl API is thread-safe */
 
+#define CURL_VERSION_ECH	  (1<<30) /* ECH support */
+
  /*
  * NAME curl_version_info()
  *
