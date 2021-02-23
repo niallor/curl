@@ -446,6 +446,9 @@ static curl_version_info_data version_info = {
 #if defined(USE_GSASL)
   | CURL_VERSION_GSASL
 #endif
+#ifdef USE_ECH
+  | CURL_VERSION_ECH
+ #endif
   ,
   NULL, /* ssl_version */
   0,    /* ssl_version_num, this is kept at zero */

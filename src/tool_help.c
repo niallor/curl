@@ -253,6 +253,14 @@ static const struct helptxt helptext[] = {
   {"-D, --dump-header <filename>",
    "Write the received headers to <filename>",
    CURLHELP_HTTP | CURLHELP_FTP},
+#ifdef USE_ECH
+  {"    --ech",
+   "Enable encrypted Client Hello",
+  CURLHELP_TLS},
+  {"    --echconfig <base64/@filename>", /* style: or --ech-config ? */
+   "Pass echconfig data, over-riding DNS",
+  CURLHELP_TLS},
+#endif
   {"    --egd-file <file>",
    "EGD socket path for random data",
    CURLHELP_TLS},
@@ -888,6 +896,7 @@ static const struct feat feats[] = {
   {"alt-svc",        CURL_VERSION_ALTSVC},
   {"HSTS",           CURL_VERSION_HSTS},
   {"gsasl",          CURL_VERSION_GSASL},
+  {"ECH",            CURL_VERSION_ECH},
 };
 
 static void print_category(curlhelp_t category)
