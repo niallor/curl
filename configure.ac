@@ -4278,8 +4278,8 @@ if test "x$want_ech" != "xno"; then
   dnl OpenSSL with a chosen ECH function should be enough
   dnl so more exhaustive checking seems unnecessary for now
   if test "x$OPENSSL_ENABLED" = "x1"; then
-    AC_CHECK_FUNCS(SSL_get_ech_status,
-      ECH_SUPPORT="ECH support available (OpenSSL with SSL_get_ech_status)"
+    AC_CHECK_FUNCS(SSL_ech_get_status,
+      ECH_SUPPORT="ECH support available (OpenSSL with SSL_ech_get_status)"
       ECH_ENABLED=1)
 
   dnl add 'elif' chain here for additional implementations
