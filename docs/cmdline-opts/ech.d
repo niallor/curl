@@ -1,6 +1,8 @@
 Long: ech
 Help: Use encrypted Client Hello
 Protocols: TLS
+See-also: echconfig
+Category: tls
 ---
 Forces curl to attempt to use encrypted Client Hello or, as --no-ech,
 to avoid using encrypted Client Hello.

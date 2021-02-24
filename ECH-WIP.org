@@ -13,6 +13,13 @@
 
     - CLOSING NOTE [2021-02-24 Wed 10:32]
 
+*** DONE Add configuration option *--enable-ech* and checking to **autoconf**
+    CLOSED: [2021-02-24 Wed 12:51]
+    :PROPERTIES:
+    :target:   configure.ac
+    :END:
+
+    - CLOSING NOTE [2021-02-24 Wed 12:51]
 *** DONE Expose _ECH_ in curl tool 'Features' list
     CLOSED: [2021-02-24 Wed 11:52]
     :PROPERTIES:
@@ -20,25 +27,35 @@
     :END:
 
     - CLOSING NOTE [2021-02-24 Wed 11:52]
-*** DONE Expose _--ech_ and _--echconfig_ in curl tool _--help_ display
+*** DONE Expose *--ech* and *--echconfig* in curl tool *--help* display
     CLOSED: [2021-02-24 Wed 11:52]
     :PROPERTIES:
     :target:   src/tool_help.c
     :END:
 
     - CLOSING NOTE [2021-02-24 Wed 11:52]
-*** NEXT Document CLI option _--[no-]esni_ (boolean)
+*** DONE Document CLI option *--[no-]esni* (boolean)
+    CLOSED: [2021-02-24 Wed 12:51]
     :PROPERTIES:
     :reference: docs/cmdline-opts/esni.d
     :target: docs/cmdline-opts/ech.d
     :END:
 
-*** NEXT Document CLI option _--echconfig_ (base64/@filename)
+    - CLOSING NOTE [2021-02-24 Wed 12:51]
+*** DONE Document CLI option *--echconfig* (base64/@filename)
+    CLOSED: [2021-02-24 Wed 12:51]
     :PROPERTIES:
     :reference: docs/cmdline-opts/esni-load.d
     :target: docs/cmdline-opts/echconfig.d
     :END:
 
+    - CLOSING NOTE [2021-02-24 Wed 12:51]
+*** DONE Include description of new CLI options in *man* file *curl.1*
+    CLOSED: [2021-02-24 Wed 14:03]
+    :PROPERTIES:
+    :target:   docs/cmdline-opts/{Makefile.inc,ech.d,echconfig.d}
+    :END:
+    - CLOSING NOTE [2021-02-24 Wed 14:03]
 *** TODO Implement parsing of CLI options
     :PROPERTIES:
     :target: src/tool_cfgable.c, src/tool_cfgable.h, src/tool_getparam.c, src/tool_help.c, src/tool_operate.c
