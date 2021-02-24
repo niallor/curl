@@ -1,0 +1,70 @@
+* ECH-WIP.org -- tracking work to demonstrate ECH in curl
+
+** Refactor changes made for ESNI-demo
+
+   See [[file:ESNI-demo.changed-files][list of files changed for ESNI-demo]]
+
+*** DONE Refactor upstream docs/ECH.md
+    CLOSED: [2021-02-24 Wed 10:36]
+    :PROPERTIES:
+    :reference: docs/ESNI.md
+    :target:   docs/ECH.md
+    :END:
+
+    - CLOSING NOTE [2021-02-24 Wed 10:32]
+
+*** DONE Expose _ECH_ in curl tool 'Features' list
+    CLOSED: [2021-02-24 Wed 11:52]
+    :PROPERTIES:
+    :target:   include/curl/curl.h, lib/version.c, src/tool_help.c
+    :END:
+
+    - CLOSING NOTE [2021-02-24 Wed 11:52]
+*** DONE Expose _--ech_ and _--echconfig_ in curl tool _--help_ display
+    CLOSED: [2021-02-24 Wed 11:52]
+    :PROPERTIES:
+    :target:   src/tool_help.c
+    :END:
+
+    - CLOSING NOTE [2021-02-24 Wed 11:52]
+*** NEXT Document CLI option _--[no-]esni_ (boolean)
+    :PROPERTIES:
+    :reference: docs/cmdline-opts/esni.d
+    :target: docs/cmdline-opts/ech.d
+    :END:
+
+*** NEXT Document CLI option _--echconfig_ (base64/@filename)
+    :PROPERTIES:
+    :reference: docs/cmdline-opts/esni-load.d
+    :target: docs/cmdline-opts/echconfig.d
+    :END:
+
+*** TODO Implement parsing of CLI options
+    :PROPERTIES:
+    :target: src/tool_cfgable.c, src/tool_cfgable.h, src/tool_getparam.c, src/tool_help.c, src/tool_operate.c
+    :END:
+
+*** TODO Review other changes made for ESNI-demo
+
+- docs/libcurl/curl_easy_setopt.3
+- docs/libcurl/opts/CURLOPT_ESNI_ASCIIRR.3
+- docs/libcurl/opts/CURLOPT_ESNI_COVER.3
+- docs/libcurl/opts/CURLOPT_ESNI_STATUS.3
+- docs/libcurl/opts/Makefile.inc
+- docs/libcurl/symbols-in-versions
+
+- lib/Makefile.inc
+- lib/doh.c
+- lib/doh.h
+- lib/esni.c
+- lib/esni.h
+- lib/setopt.c
+- lib/urldata.h
+- lib/vtls/openssl.c
+
+- tests/unit/unit1650.c
+- tests/unit/unit1655.c
+
+# Local Variables:
+# mode: org
+# End:
