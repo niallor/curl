@@ -68,6 +68,8 @@ DPAGES = \
   doh-insecure.d \
   doh-url.d \
   dump-header.d \
+  ech.d \
+  echconfig.d \
   egd-file.d \
   engine.d \
   etag-compare.d \

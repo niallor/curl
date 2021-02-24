@@ -2,8 +2,9 @@ Long: echconfig
 Help: ECH configuration data
 Arg: <string/@file>
 Protocols: TLS
+See-also: ech
+Category: tls
 ---
-
 Specify echconfig data as a hexadecimal or base-64 encoded string
 for use instead of fetching these data from the DNS.
 
