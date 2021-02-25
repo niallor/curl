@@ -23,7 +23,9 @@
 *** DONE Expose _ECH_ in curl tool 'Features' list
     CLOSED: [2021-02-24 Wed 11:52]
     :PROPERTIES:
-    :target:   include/curl/curl.h, lib/version.c, src/tool_help.c
+    :target:  include/curl/curl.h
+    :target+: lib/version.c
+    :target+: src/tool_help.c
     :END:
 
     - CLOSING NOTE [2021-02-24 Wed 11:52]
@@ -53,32 +55,49 @@
 *** DONE Include description of new CLI options in *man* file *curl.1*
     CLOSED: [2021-02-24 Wed 14:03]
     :PROPERTIES:
-    :target:   docs/cmdline-opts/{Makefile.inc,ech.d,echconfig.d}
+    :target:   docs/cmdline-opts/Makefile.inc
+    :target+:   docs/cmdline-opts/ech.d
+    :target+:   docs/cmdline-opts/echconfig.d
     :END:
     - CLOSING NOTE [2021-02-24 Wed 14:03]
 *** TODO Implement parsing of CLI options
     :PROPERTIES:
-    :target: src/tool_cfgable.c, src/tool_cfgable.h, src/tool_getparam.c, src/tool_help.c, src/tool_operate.c
+    :target:  src/tool_cfgable.c
+    :target+: src/tool_cfgable.h
+    :target+: src/tool_getparam.c
+    :target+: src/tool_help.c
+    :target+: src/tool_operate.c
+    :END:
+
+*** TODO Declare and document libcurl options to support ECH
+    :PROPERTIES:
+    :target:   include/curl/curl.h
+    :target+:  docs/libcurl/curl_easy_setopt.3
+    :target+:  docs/libcurl/opts/CURLOPT_ESNI_ASCIIRR.3
+    :target+:  docs/libcurl/opts/CURLOPT_ESNI_COVER.3
+    :target+:  docs/libcurl/opts/CURLOPT_ESNI_STATUS.3
+    :target+:  docs/libcurl/opts/Makefile.inc
+    :target+:  docs/libcurl/symbols-in-versions
+    :END:
+*** TODO implement ECH support in OpenSSL backend interface
+    :PROPERTIES:
+    :target:  lib/vtls/openssl.c
+    :END:
+
+*** TODO implement libcurl support for ECH
+    :PROPERTIES:
+    :target:  lib/Makefile.inc
+    :target+: lib/esni.c (rename to ech.c)
+    :target+: lib/esni.h (rename to ech.h)
+    :target+: lib/setopt.c
+    :target+: lib/urldata.h
+    :target+: lib/vtls/openssl.c (calls from libcurl code)
     :END:
 
 *** TODO Review other changes made for ESNI-demo
 
-- docs/libcurl/curl_easy_setopt.3
-- docs/libcurl/opts/CURLOPT_ESNI_ASCIIRR.3
-- docs/libcurl/opts/CURLOPT_ESNI_COVER.3
-- docs/libcurl/opts/CURLOPT_ESNI_STATUS.3
-- docs/libcurl/opts/Makefile.inc
-- docs/libcurl/symbols-in-versions
-
-- lib/Makefile.inc
 - lib/doh.c
 - lib/doh.h
-- lib/esni.c
-- lib/esni.h
-- lib/setopt.c
-- lib/urldata.h
-- lib/vtls/openssl.c
-
 - tests/unit/unit1650.c
 - tests/unit/unit1655.c
 
