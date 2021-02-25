@@ -60,15 +60,15 @@
     :target+:   docs/cmdline-opts/echconfig.d
     :END:
     - CLOSING NOTE [2021-02-24 Wed 14:03]
-*** TODO Implement parsing of CLI options
+*** DONE Implement parsing of CLI options
+    CLOSED: [2021-02-25 Thu 19:01]
     :PROPERTIES:
     :target:  src/tool_cfgable.c
     :target+: src/tool_cfgable.h
     :target+: src/tool_getparam.c
-    :target+: src/tool_help.c
-    :target+: src/tool_operate.c
     :END:
 
+    - CLOSING NOTE [2021-02-25 Thu 19:01]
 *** TODO Declare and document libcurl options to support ECH
     :PROPERTIES:
     :target:   include/curl/curl.h
@@ -79,12 +79,11 @@
     :target+:  docs/libcurl/opts/Makefile.inc
     :target+:  docs/libcurl/symbols-in-versions
     :END:
-*** TODO implement ECH support in OpenSSL backend interface
+*** TODO Propagate CLI options for ECH to corresponding libcurl options
     :PROPERTIES:
-    :target:  lib/vtls/openssl.c
+    :target:   src/tool_operate.c
     :END:
-
-*** TODO implement libcurl support for ECH
+*** TODO Propagate libcurl options for ECH to OpenSSL backend
     :PROPERTIES:
     :target:  lib/Makefile.inc
     :target+: lib/esni.c (rename to ech.c)
@@ -93,7 +92,10 @@
     :target+: lib/urldata.h
     :target+: lib/vtls/openssl.c (calls from libcurl code)
     :END:
-
+*** TODO Propagate ECH signals from OpenSSL backend interface to OpenSSL
+    :PROPERTIES:
+    :target:  lib/vtls/openssl.c
+    :END:
 *** TODO Review other changes made for ESNI-demo
 
 - lib/doh.c

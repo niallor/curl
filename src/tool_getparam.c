@@ -286,6 +286,12 @@ static const struct LongShort aliases[]= {
   {"EC", "etag-save",                ARG_FILENAME},
   {"ED", "etag-compare",             ARG_FILENAME},
   {"EE", "curves",                   ARG_STRING},
+#ifdef USE_ECH
+  {"EK", "ech",                      ARG_BOOL},
+         /* "EK" is as good a choice of starting point
+          * for ECH-related short names as any. */
+  {"EL", "echconfig",                ARG_FILENAME},
+#endif
   {"f",  "fail",                     ARG_BOOL},
   {"fa", "fail-early",               ARG_BOOL},
   {"fb", "styled-output",            ARG_BOOL},
@@ -1934,6 +1940,57 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       case 'E':
         GetStr(&config->ssl_ec_curves, nextarg);
         break;
+
+#ifdef USE_ECH
+      case 'K':
+        /* --ech */
+        if(!config->ech_status.word) {
+          /* No ECH option was parsed yet */
+          config->ech_status.flags.selected = toggle;
+          config->ech_status.flags.disabled = !toggle;
+        }
+        break;
+
+      case 'L':
+        /* --echconfig */
+        /* Allow string data or "@"-escaped filename */
+        if(!config->ech_status.flags.disabled) {
+
+          config->ech_status.flags.selected = TRUE; /* clamp flag up */
+
+          if('@' != *nextarg) {
+            /* Simple case: just a string */
+            GetStr(&config->ech_config, nextarg);
+          }
+
+          else {
+            /* Indirect case: @filename or @- for stdin */
+            FILE *file;
+            nextarg++;        /* skip over '@' */
+
+            if(!strcmp("-", nextarg)) {
+              file = stdin;
+            }
+            else {
+              file = fopen(nextarg, FOPEN_READTEXT);
+            }
+            if(!file) {
+              warnf(global,
+                    "Couldn't read file \"%s\" "
+                    "specified for \"--ech_config\" option",
+                    nextarg);
+              return PARAM_BAD_USE; /*  */
+            }
+
+            err = file2string(&config->ech_config, file);
+            if(file != stdin)
+              fclose(file);
+            if(err)
+              return err;
+          } /* file done */
+        }
+        break;
+#endif
 
       default: /* unknown flag */
         return PARAM_OPTION_UNKNOWN;
