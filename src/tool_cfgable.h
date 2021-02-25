@@ -27,6 +27,10 @@
 #include "tool_urlglob.h"
 #include "tool_formparse.h"
 
+#ifdef USE_ECH
+# include <openssl/ech.h>
+#endif
+
 typedef enum {
   ERR_NONE,
   ERR_BINARY_TERMINAL = 1, /* binary to terminal detected */
@@ -289,6 +293,16 @@ struct OperationConfig {
   bool haproxy_protocol;          /* whether to send HAProxy protocol v1 */
   bool disallow_username_in_url;  /* disallow usernames in URLs */
   char *aws_sigv4;
+#ifdef USE_ECH
+  union {
+    unsigned long word;
+    struct {
+      unsigned int disabled : 1;  /* Set by --no-ech option */
+      unsigned int selected : 1;  /* Set by any other ECH-related option */
+    } flags;
+  } ech_status;
+  char *ech_config;               /* Set by --echconfig option */
+#endif
   struct GlobalConfig *global;
   struct OperationConfig *prev;
   struct OperationConfig *next;   /* Always last in the struct */

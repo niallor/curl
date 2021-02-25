@@ -170,6 +170,11 @@ static void free_config_fields(struct OperationConfig *config)
   Curl_safefree(config->ftp_alternative_to_user);
 
   Curl_safefree(config->aws_sigv4);
+#ifdef USE_ECH
+  Curl_safefree(config->ech_config);
+  config->ech_config = NULL;
+  config->ech_status.word = 0;
+#endif
 }
 
 void config_free(struct OperationConfig *config)
