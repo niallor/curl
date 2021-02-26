@@ -69,8 +69,9 @@
     :END:
 
     - CLOSING NOTE [2021-02-25 Thu 19:01]
-*** TODO Declare and document libcurl options to support ECH
-    :PROPERTIES:
+*** DONE Declare and document libcurl options to support ECH
+    CLOSED: [2021-02-26 Fri 16:44]
+    :Properties:
     :target:   include/curl/curl.h
     :target+:  docs/libcurl/curl_easy_setopt.3
     :target+:  docs/libcurl/opts/CURLOPT_ECH_CONFIG.3
@@ -81,6 +82,7 @@
     :reference+:  docs/libcurl/opts/CURLOPT_ESNI_COVER.3
     :reference+:  docs/libcurl/opts/CURLOPT_ESNI_STATUS.3
     :END:
+    - CLOSING NOTE [2021-02-26 Fri 16:44]
 *** TODO Propagate CLI options for ECH to corresponding libcurl options
     :PROPERTIES:
     :target:   src/tool_operate.c
