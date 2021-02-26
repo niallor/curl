@@ -1,0 +1,67 @@
+.\" **************************************************************************
+.\" *                                  _   _ ____  _
+.\" *  Project                     ___| | | |  _ \| |
+.\" *                             / __| | | | |_) | |
+.\" *                            | (__| |_| |  _ <| |___
+.\" *                             \___|\___/|_| \_\_____|
+.\" *
+.\" * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" *
+.\" * This software is licensed as described in the file COPYING, which
+.\" * you should have received as part of this distribution. The terms
+.\" * are also available at https://curl.haxx.se/docs/copyright.html.
+.\" *
+.\" * You may opt to use, copy, modify, merge, publish, distribute and/or sell
+.\" * copies of the Software, and permit persons to whom the Software is
+.\" * furnished to do so, under the terms of the COPYING file.
+.\" *
+.\" * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
+.\" * KIND, either express or implied.
+.\" *
+.\" **************************************************************************
+.\"
+.TH CURLOPT_ECH_ASCIIRR 3 "26 Feb 2021" "libcurl FUTURE" "curl_easy_setopt options"
+.SH NAME
+CURLOPT_ECH_ASCIIRR \- specify the public key data to use for ECH
+.SH SYNOPSIS
+.nf
+#include <curl/curl.h>
+
+CURLcode curl_easy_setopt(CURL *handle, CURLOPT_ECH_ASCIIRR, char *blob);
+.fi
+.SH EXPERIMENTAL
+Warning: this feature is early code and is marked as experimental. It can only
+be enabled by explicitly telling configure with \fB--enable-ech\fP. You are
+advised to not ship this in production before the experimental label is
+removed.
+.SH DESCRIPTION
+Pass in a pointer to a string representing, in base64 or hexadecimal
+encoding, one or more ECH configuration data structures to be used for
+setting up the TLS connection.  For ECH processing, these data are
+REQUIRED, and must be specified using this option as support is not
+yet available for automatic discovery of service-binding (SVCB) data
+from the DNS.
+
+Multiple ECH configuration data structures may be specified using
+hexadecimal encoding by simply concatenating the individual encoded
+strings, or using base-64 encoding by using a semicolon between each
+individual encoded string and the following one.
+.SH DEFAULT
+NULL. No ECH configuration data are specified.
+.SH PROTOCOLS
+HTTPS
+.SH EXAMPLE
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_ECH_STATUS, 1L);
+  curl_easy_setopt(curl, CURLOPT_ECH_CONFIG, ascii_encoded_echconfig);
+  curl_easy_perform(curl);
+}
+.fi
+.SH AVAILABILITY
+To be added in a FUTURE release
+.SH RETURN VALUE
+Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
+.SH "SEE ALSO"
+.BR CURLOPT_ECH_STATUS "(3)

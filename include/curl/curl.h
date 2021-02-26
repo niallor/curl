@@ -1065,6 +1065,10 @@ typedef CURLSTScode (*curl_hstswrite_callback)(CURL *easy,
 #define CURLPROTO_GOPHERS (1<<29)
 #define CURLPROTO_ALL    (~0) /* enable everything */
 
+/* CURLECH_ defines are for the CURLOPT_ECH_STATUS option */
+#define CURLECH_ENABLE     (1<<0)
+#define CURLECH_INVALID (~((1<<1) - 1)) /* unused bits */
+
 /* long may be 32 or 64 bits, but we should never depend on anything else
    but 32 */
 #define CURLOPTTYPE_LONG          0
@@ -2202,6 +2206,17 @@ typedef enum {
 
   /* Can leak things, gonna exit() soon */
   CURLOPT(CURLOPT_QUICK_EXIT, CURLOPTTYPE_LONG, 322),
+
+  /* NB!
+   * Ensure ECH options do not re-use already-defined codepoints.
+   * Leaving some gap after last official code-point may help
+   */
+
+  /* ECH status: 1L to enable, 0L otherwise */
+  CURLOPT(CURLOPT_ECH_STATUS, CURLOPTTYPE_LONG, 338),
+  /* ECH config: as base64 or hex respectively */
+  /* TODO: consider using binary only, or as third alternative */
+  CURLOPT(CURLOPT_ECH_CONFIG, CURLOPTTYPE_STRINGPOINT, 339),
 
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
