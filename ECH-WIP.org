@@ -83,12 +83,14 @@
     :reference+:  docs/libcurl/opts/CURLOPT_ESNI_STATUS.3
     :END:
     - CLOSING NOTE [2021-02-26 Fri 16:44]
-*** NEXT Propagate CLI options for ECH to corresponding libcurl options
+*** DONE Propagate CLI options for ECH to corresponding libcurl options
+    CLOSED: [2021-02-27 Sat 17:21]
     :PROPERTIES:
     :target:  src/tool_operate.c
     :target+: lib/urldata.h
     :target+: lib/setopt.c
     :END:
+    - CLOSING NOTE [2021-02-27 Sat 17:21]
 *** TODO Propagate libcurl options for ECH to OpenSSL backend
     :PROPERTIES:
     :target:  lib/Makefile.inc
@@ -112,3 +114,5 @@
 # Local Variables:
 # mode: org
 # End:
+*** TODO Add validation tests along propagation path
+*** TODO Add unit tests
