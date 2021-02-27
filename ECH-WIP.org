@@ -83,9 +83,11 @@
     :reference+:  docs/libcurl/opts/CURLOPT_ESNI_STATUS.3
     :END:
     - CLOSING NOTE [2021-02-26 Fri 16:44]
-*** TODO Propagate CLI options for ECH to corresponding libcurl options
+*** NEXT Propagate CLI options for ECH to corresponding libcurl options
     :PROPERTIES:
-    :target:   src/tool_operate.c
+    :target:  src/tool_operate.c
+    :target+: lib/urldata.h
+    :target+: lib/setopt.c
     :END:
 *** TODO Propagate libcurl options for ECH to OpenSSL backend
     :PROPERTIES:

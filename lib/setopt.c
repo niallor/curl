@@ -3148,6 +3148,22 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   case CURLOPT_QUICK_EXIT:
     data->set.quick_exit = (0 != va_arg(param, long)) ? 1L:0L;
     break;
+#ifdef USE_ECH
+  case CURLOPT_ECH_STATUS:
+    arg = va_arg(param, long);
+    if(arg & CURLECH_INVALID)             /* Unused flag bits */
+      return CURLE_BAD_FUNCTION_ARGUMENT; /* MUST be zero */
+    if(arg & CURLECH_ENABLE) {
+      data->set.tls_enable_ech = TRUE;
+    }
+    break;
+  case CURLOPT_ECH_CONFIG:
+    argptr = va_arg(param, char *);
+    result = Curl_setstropt(&data->set.str[STRING_ECH_CONFIG], argptr);
+    if(result)
+      return result;
+    break;
+#endif
   default:
     /* unknown tag and its companion, just ignore: */
     result = CURLE_UNKNOWN_OPTION;

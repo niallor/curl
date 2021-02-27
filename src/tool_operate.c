@@ -2155,6 +2155,35 @@ static CURLcode single_transfer(struct GlobalConfig *global,
         if(config->hsts)
           my_setopt_str(curl, CURLOPT_HSTS, config->hsts);
 
+#ifdef USE_ECH
+        /* only if enabled in configure */
+        if(config->ech_status.flags.selected) {
+          long flagword = CURLECH_ENABLE;
+
+          my_setopt(curl, CURLOPT_ECH_STATUS, flagword);
+
+          /* ECH options were already checked, so load-data is set */
+          my_setopt_str(curl, CURLOPT_ECH_CONFIG, config->ech_config);
+        }
+#endif
+
+#ifdef USE_METALINK
+        if(!metalink && config->use_metalink) {
+          outs->metalink_parser = metalink_parser_context_new();
+          if(!outs->metalink_parser) {
+            result = CURLE_OUT_OF_MEMORY;
+            break;
+          }
+          fprintf(global->errors,
+                  "Metalink: parsing (%s) metalink/XML...\n", per->this_url);
+        }
+        else if(metalink)
+          fprintf(global->errors,
+                  "Metalink: fetching (%s) from (%s)...\n",
+                  mlfile->filename, per->this_url);
+#endif /* USE_METALINK */
+
+        per->metalink = metalink;
         /* initialize retry vars for loop below */
         per->retry_sleep_default = (config->retry_delay) ?
           config->retry_delay*1000L : RETRY_SLEEP_DEFAULT; /* ms */
