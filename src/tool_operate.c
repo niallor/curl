@@ -2136,6 +2136,18 @@ static CURLcode single_transfer(struct GlobalConfig *global,
         if(config->hsts)
           my_setopt_str(curl, CURLOPT_HSTS, config->hsts);
 
+#ifdef USE_ECH
+        /* only if enabled in configure */
+        if(config->ech_status.flags.selected) {
+          long flagword = CURLECH_ENABLE;
+
+          my_setopt(curl, CURLOPT_ECH_STATUS, flagword);
+
+          /* ECH options were already checked, so load-data is set */
+          my_setopt_str(curl, CURLOPT_ECH_CONFIG, config->ech_config);
+        }
+#endif
+
 #ifdef USE_METALINK
         if(!metalink && config->use_metalink) {
           outs->metalink_parser = metalink_parser_context_new();

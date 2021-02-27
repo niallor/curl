@@ -1583,6 +1583,9 @@ enum dupstring {
   STRING_DNS_LOCAL_IP4,
   STRING_DNS_LOCAL_IP6,
   STRING_SSL_EC_CURVES,
+#ifdef USE_ECH
+  STRING_ECH_CONFIG,            /* CURLOPT_ECH_CONFIG */
+#endif
 
   /* -- end of null-terminated strings -- */
 
@@ -1863,6 +1866,9 @@ struct UserDefined {
   BIT(http09_allowed); /* allow HTTP/0.9 responses */
   BIT(mail_rcpt_allowfails); /* allow RCPT TO command to fail for some
                                 recipients */
+#ifdef USE_ECH
+  BIT(tls_enable_ech);     /* TLS ECH extension  */
+#endif
 };
 
 struct Names {
