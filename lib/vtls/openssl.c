@@ -301,11 +301,9 @@ struct ssl_backend_data {
 #endif
   bool x509_store_setup;            /* x509 store has been set up */
 #ifdef USE_ECH
-  /* TODO: when freeing BACKEND, provide for freeing ECH_CONFIG */
+  /* TODO: when freeing backend, provide for freeing ech_config */
   SSL_ECH *ech_config;           /* Handle for ECH data object */
   int num_echs;                   /* Count of ECH keys */
-#define ECH_CONFIG BACKEND->ech_config
-#define NUM_ECHS BACKEND->num_echs
 #endif  /* USE_ECH */
 };
 
@@ -1914,10 +1912,10 @@ static void ossl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
   }
 #ifdef USE_ECH
   /* Free ECH data */
-  if(!BACKEND->ech_config) {
-    SSL_ECH_free(BACKEND->ech_config);
-    OPENSSL_free(BACKEND->ech_config);
-    BACKEND->ech_config = NULL;
+  if(!backend->ech_config) {
+    SSL_ECH_free(backend->ech_config);
+    OPENSSL_free(backend->ech_config);
+    backend->ech_config = NULL;
   }
 #endif
 }
