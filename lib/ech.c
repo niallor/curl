@@ -68,6 +68,11 @@ bool Curl_ech_ready(struct Curl_easy *data)
       infof(data, "WARNING: missing value for STRING_ECH_CONFIG\n");
       ready = FALSE;
     }
+    else {
+      infof(data, "ECH: found STRING_ECH_CONFIG:\n");
+      infof(data, " %s\n", data->set.str[STRING_ECH_CONFIG]);
+    }
+
     /* TODO: review completeness of inspection above */
   }
 

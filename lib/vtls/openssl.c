@@ -302,8 +302,8 @@ struct ssl_backend_data {
   bool x509_store_setup;            /* x509 store has been set up */
 #ifdef USE_ECH
   /* TODO: when freeing backend, provide for freeing ech_config */
-  SSL_ECH *ech_config;           /* Handle for ECH data object */
-  int num_echs;                   /* Count of ECH keys */
+  char *ech_config;             /* Handle for ECH data object */
+  int num_echs;                 /* Count of ECH keys */
 #endif  /* USE_ECH */
 };
 
@@ -1913,7 +1913,7 @@ static void ossl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
 #ifdef USE_ECH
   /* Free ECH data */
   if(!backend->ech_config) {
-    SSL_ECH_free(backend->ech_config);
+    /* SSL_ECH_free(backend->ech_config); */
     OPENSSL_free(backend->ech_config);
     backend->ech_config = NULL;
   }
@@ -3765,6 +3765,34 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
 #endif
 
   SSL_set_app_data(backend->handle, cf);
+
+#ifdef USE_ECH
+  if(data->set.tls_enable_ech) {
+    char *ech_config = data->set.str[STRING_ECH_CONFIG];
+    bool value_error = FALSE;
+    int nechs;
+    int rv;
+    value_error = !Curl_ech_ready(data);
+    if(value_error)
+      return CURLE_SSL_CONNECT_ERROR;
+    rv = SSL_ech_add(backend->handle, ECH_FMT_GUESS,
+                     strlen(ech_config), ech_config, &nechs);
+    if(rv != 1) {
+      infof(data, "ECH: rv %d from SSL_ech_add() [ERROR]\n", rv);
+      return CURLE_SSL_CONNECT_ERROR;
+    }
+    else {
+      infof(data, "ECH: rv %d from SSL_ech_add() [OK]\n", rv);
+    }
+    if(!nechs) {
+      infof(data, "ECH: nechs %d from SSL_ech_add() [ERROR]\n", rv);
+      return CURLE_SSL_CONNECT_ERROR;
+    }
+    else {
+      infof(data, "ECH: nechs %d from SSL_ech_add() [OK]\n", nechs);
+    }
+  }
+#endif
 
   if(ssl_config->primary.sessionid) {
     Curl_ssl_sessionid_lock(data);
