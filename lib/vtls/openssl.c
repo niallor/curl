@@ -80,6 +80,11 @@
 #include <openssl/buffer.h>
 #include <openssl/pkcs12.h>
 
+#ifdef USE_ECH
+#include "ech.h"
+#include <openssl/ech.h>
+#endif /* USE_ECH */
+
 #if (OPENSSL_VERSION_NUMBER >= 0x0090808fL) && !defined(OPENSSL_NO_OCSP)
 #include <openssl/ocsp.h>
 #endif
@@ -295,6 +300,13 @@ struct ssl_backend_data {
   bool     keylog_done;
 #endif
   bool x509_store_setup;            /* x509 store has been set up */
+#ifdef USE_ECH
+  /* TODO: when freeing BACKEND, provide for freeing ECH_CONFIG */
+  SSL_ECH *ech_config;           /* Handle for ECH data object */
+  int num_echs;                   /* Count of ECH keys */
+#define ECH_CONFIG BACKEND->ech_config
+#define NUM_ECHS BACKEND->num_echs
+#endif  /* USE_ECH */
 };
 
 #if defined(HAVE_SSL_X509_STORE_SHARE)
@@ -1900,6 +1912,14 @@ static void ossl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
     bio_cf_method_free(backend->bio_method);
     backend->bio_method = NULL;
   }
+#ifdef USE_ECH
+  /* Free ECH data */
+  if(!BACKEND->ech_config) {
+    SSL_ECH_free(BACKEND->ech_config);
+    OPENSSL_free(BACKEND->ech_config);
+    BACKEND->ech_config = NULL;
+  }
+#endif
 }
 
 /*
