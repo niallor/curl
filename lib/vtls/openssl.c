@@ -3281,6 +3281,8 @@ static CURLcode ossl_connect_step1(struct Curl_easy *data,
 
   connssl->connecting_state = ssl_connect_2;
 
+  infof(data, "ossl_connect_step1() returning CURLE_OK\n");
+
   return CURLE_OK;
 }
 
@@ -3295,6 +3297,8 @@ static CURLcode ossl_connect_step2(struct Curl_easy *data,
               || ssl_connect_2_writing == connssl->connecting_state);
 
   ERR_clear_error();
+
+  infof(data, "ossl_connect_step2() starting\n");
 
   err = SSL_connect(backend->handle);
 #ifndef HAVE_KEYLOG_CALLBACK
@@ -3334,6 +3338,8 @@ static CURLcode ossl_connect_step2(struct Curl_easy *data,
       long lerr;
       int lib;
       int reason;
+
+      infof(data, "ossl_connect_step2() had an 'untreated error'\n");
 
       /* the connection failed, we're not waiting for anything else. */
       connssl->connecting_state = ssl_connect_2;
@@ -3436,6 +3442,8 @@ static CURLcode ossl_connect_step2(struct Curl_easy *data,
                           BUNDLE_MULTIPLEX : BUNDLE_NO_MULTIUSE);
     }
 #endif
+
+    infof(data, "ossl_connect_step2() returning CURLE_OK\n");
 
     return CURLE_OK;
   }
