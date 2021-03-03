@@ -76,6 +76,11 @@
 #include <openssl/buffer.h>
 #include <openssl/pkcs12.h>
 
+#ifdef USE_ECH
+#include "ech.h"
+#include <openssl/ech.h>
+#endif /* USE_ECH */
+
 #ifdef USE_AMISSL
 #include "amigaos.h"
 #endif
@@ -244,6 +249,13 @@ struct ssl_backend_data {
   /* Set to true once a valid keylog entry has been created to avoid dupes. */
   bool     keylog_done;
 #endif
+#ifdef USE_ECH
+  /* TODO: when freeing BACKEND, provide for freeing ECH_CONFIG */
+  SSL_ECH *ech_config;           /* Handle for ECH data object */
+  int num_echs;                   /* Count of ECH keys */
+#define ECH_CONFIG BACKEND->ech_config
+#define NUM_ECHS BACKEND->num_echs
+#endif  /* USE_ECH */
 };
 
 /*
@@ -1378,6 +1390,14 @@ static void ossl_closeone(struct Curl_easy *data,
     SSL_CTX_free(backend->ctx);
     backend->ctx = NULL;
   }
+#ifdef USE_ECH
+  /* Free ECH data */
+  if(!BACKEND->ech_config) {
+    SSL_ECH_free(BACKEND->ech_config);
+    OPENSSL_free(BACKEND->ech_config);
+    BACKEND->ech_config = NULL;
+  }
+#endif
 }
 
 /*
