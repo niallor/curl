@@ -128,6 +128,7 @@ LIB_CFILES =         \
   easy.c             \
   easygetopt.c       \
   easyoptions.c      \
+  ech.c              \
   escape.c           \
   file.c             \
   fileinfo.c         \
@@ -260,6 +261,7 @@ LIB_HFILES =         \
   dynbuf.h           \
   easyif.h           \
   easyoptions.h      \
+  ech.h              \
   escape.h           \
   file.h             \
   fileinfo.h         \

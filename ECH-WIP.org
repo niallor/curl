@@ -91,14 +91,16 @@
     :target+: lib/setopt.c
     :END:
     - CLOSING NOTE [2021-02-27 Sat 17:21]
-*** TODO Propagate libcurl options for ECH to OpenSSL backend
+*** NEXT Propagate libcurl options for ECH to OpenSSL backend
     :PROPERTIES:
     :target:  lib/Makefile.inc
-    :target+: lib/esni.c (rename to ech.c)
-    :target+: lib/esni.h (rename to ech.h)
-    :target+: lib/setopt.c
-    :target+: lib/urldata.h
+    :target+: lib/ech.c
+    :target+: lib/ech.h
+    :target+: lib/setopt.c ?
+    :target+: lib/urldata.h ?
     :target+: lib/vtls/openssl.c (calls from libcurl code)
+    :reference:  lib/esni.c (rename to ech.c)
+    :reference+: lib/esni.h (rename to ech.h)
     :END:
 *** TODO Propagate ECH signals from OpenSSL backend interface to OpenSSL
     :PROPERTIES:
