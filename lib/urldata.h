@@ -1546,9 +1546,10 @@ enum dupstring {
   STRING_DNS_LOCAL_IP4,
   STRING_DNS_LOCAL_IP6,
   STRING_SSL_EC_CURVES,
-#ifdef USE_ECH
-  STRING_ECH_CONFIG,            /* CURLOPT_ECH_CONFIG */
-#endif
+
+  STRING_ECH_CONFIG,            /* CURLOPT_ECH_CONFIG
+                                 * TODO: packages/OS400/chkstring.c
+                                 */
 
   /* -- end of null-terminated strings -- */
 

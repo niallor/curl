@@ -300,11 +300,11 @@ struct ssl_backend_data {
   bool     keylog_done;
 #endif
   bool x509_store_setup;            /* x509 store has been set up */
-#ifdef USE_ECH
-  /* TODO: when freeing backend, provide for freeing ech_config */
-  char *ech_config;             /* Handle for ECH data object */
-  int num_echs;                 /* Count of ECH keys */
-#endif  /* USE_ECH */
+/* #ifdef USE_ECH */
+/*   /\* TODO: when freeing backend, provide for freeing ech_config *\/ */
+/*   char *ech_config;             /\* Handle for ECH data object *\/ */
+/*   int num_echs;                 /\* Count of ECH keys *\/ */
+/* #endif  /\* USE_ECH *\/ */
 };
 
 #if defined(HAVE_SSL_X509_STORE_SHARE)
@@ -1910,14 +1910,14 @@ static void ossl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
     bio_cf_method_free(backend->bio_method);
     backend->bio_method = NULL;
   }
-#ifdef USE_ECH
-  /* Free ECH data */
-  if(!backend->ech_config) {
-    /* SSL_ECH_free(backend->ech_config); */
-    OPENSSL_free(backend->ech_config);
-    backend->ech_config = NULL;
-  }
-#endif
+/* #ifdef USE_ECH */
+/*   /\* Free ECH data *\/ */
+/*   if(!backend->ech_config) { */
+/*     /\* SSL_ECH_free(backend->ech_config); *\/ */
+/*     OPENSSL_free(backend->ech_config); */
+/*     backend->ech_config = NULL; */
+/*   } */
+/* #endif */
 }
 
 /*
@@ -3754,7 +3754,7 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
   if((0 == Curl_inet_pton(AF_INET, hostname, &addr)) &&
 #ifdef ENABLE_IPV6
      (0 == Curl_inet_pton(AF_INET6, hostname, &addr)) &&
-#endif
+#endif  /* ENABLE_IPV6 */
      sni) {
     char *snihost = Curl_ssl_snihost(data, hostname, NULL);
     if(!snihost || !SSL_set_tlsext_host_name(backend->handle, snihost)) {
@@ -3762,7 +3762,6 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
       return CURLE_SSL_CONNECT_ERROR;
     }
   }
-#endif
 
   SSL_set_app_data(backend->handle, cf);
 
@@ -3791,8 +3790,16 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
     else {
       infof(data, "ECH: nechs %d from SSL_ech_add() [OK]\n", nechs);
     }
+    infof(data, "ECH: will use hostname '%s' as ECH inner name\n", hostname);
+
+    rv = SSL_ech_server_name(backend->handle,
+                             hostname,        /* ech_inner_name */
+                             NULL             /* ech_outer_name */
+                             );
+    infof(data, "ECH: rv %d from SSL_ech_server_name()\n", rv);
   }
-#endif
+#endif  /* USE_ECH */
+#endif  /* SSL_CTRL_SET_TLSEXT_HOSTNAME */
 
   if(ssl_config->primary.sessionid) {
     Curl_ssl_sessionid_lock(data);
@@ -3879,6 +3886,7 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
      <0 is "handshake was not successful, because a fatal error occurred" */
   if(1 != err) {
     int detail = SSL_get_error(backend->handle, err);
+    infof(data, "SSL_connect() returned %d, detail %d\n", err, detail);
 
     if(SSL_ERROR_WANT_READ == detail) {
       connssl->connecting_state = ssl_connect_2_reading;
@@ -3906,7 +3914,7 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
       int lib;
       int reason;
 
-      infof(data, "ossl_connect_step2() had an 'untreated error'\n");
+      infof(data, "ossl_connect_step2(): detail is 'untreated error'\n");
 
       /* the connection failed, we're not waiting for anything else. */
       connssl->connecting_state = ssl_connect_2;
