@@ -3775,6 +3775,20 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
     value_error = !Curl_ech_ready(data);
     if(value_error)
       return CURLE_SSL_CONNECT_ERROR;
+
+    infof(data,
+          "ECH: will use hostname '%s' as ECH inner name\n"
+          "  ECH: will use string '%s' as ECH outer name\n",
+          hostname,
+          outername);
+    rv = SSL_ech_server_name(backend->handle,
+                             hostname, /* ech_inner_name (again) */
+                             outername /* ech_outer_name */
+                             );
+    infof(data, "ECH: rv %d from SSL_ech_server_name()\n", rv);
+
+    /* NB! invoke SSL_ech_server_name() BEFORE SSL_ech_add() */
+
     rv = SSL_ech_add(backend->handle, ECH_FMT_GUESS,
                      strlen(ech_config), ech_config, &nechs);
     if(rv != 1) {
@@ -3791,17 +3805,6 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
     else {
       infof(data, "ECH: nechs %d from SSL_ech_add() [OK]\n", nechs);
     }
-    infof(data,
-          "ECH: will use hostname '%s' as ECH inner name\n"
-          "  ECH: will use string '%s' as ECH outer name\n",
-          hostname,
-          outername);
-
-    rv = SSL_ech_server_name(backend->handle,
-                             hostname, /* ech_inner_name (again) */
-                             outername /* ech_outer_name */
-                             );
-    infof(data, "ECH: rv %d from SSL_ech_server_name()\n", rv);
   }
 #endif  /* USE_ECH */
 #endif  /* SSL_CTRL_SET_TLSEXT_HOSTNAME */
