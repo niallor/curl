@@ -91,7 +91,8 @@
     :target+: lib/setopt.c
     :END:
     - CLOSING NOTE [2021-02-27 Sat 17:21]
-*** NEXT Propagate libcurl options for ECH to OpenSSL backend
+*** DONE Propagate libcurl options for ECH to OpenSSL backend
+    CLOSED: [2021-05-01 Sat 11:59]
     :PROPERTIES:
     :target:  lib/Makefile.inc
     :target+: lib/ech.c
@@ -100,7 +101,8 @@
     :reference:  lib/esni.c (rename to ech.c)
     :reference+: lib/esni.h (rename to ech.h)
     :END:
-*** TODO Propagate ECH signals from OpenSSL backend interface to OpenSSL
+*** DONE Propagate ECH signals from OpenSSL backend interface to OpenSSL
+    CLOSED: [2021-05-01 Sat 11:59]
     :PROPERTIES:
     :target:  lib/vtls/openssl.c (calls to OpenSSL code)
     :END:
@@ -111,8 +113,9 @@
 - tests/unit/unit1650.c
 - tests/unit/unit1655.c
 
+*** TODO Add validation tests along propagation path
+*** TODO Add unit tests
+
 # Local Variables:
 # mode: org
 # End:
-*** TODO Add validation tests along propagation path
-*** TODO Add unit tests
