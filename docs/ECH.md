@@ -52,7 +52,7 @@ Instructions are [documented separately][howto-ech]
 - Wrapper script performing SVCB resolution and feeding configuration
   data in CLI option to *curl*
 
-- Interoperation with [Cloudflare demonstration service][cfdemo]
+- Interoperation with [Cloudflare demonstration service][cfechdemo]
 
 ## TODO
 
