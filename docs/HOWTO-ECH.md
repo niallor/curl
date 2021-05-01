@@ -176,3 +176,8 @@ display the generated command which would be used to invoke curl.
         https://crypto.cloudflare.com/cdn-cgi/trace
 
 ---
+
+[cfechdemo]:     https://crypto.cloudflare.com//cdn-cgi/trace
+[sftcd/openssl]: https://github.com/sftcd/openssl/
+[niallor/curl]:  https://github.com/niallor/curl/
+[rthalley/dnspython]: https://github.com/rthalley/dnspython
