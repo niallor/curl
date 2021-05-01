@@ -1,135 +1,77 @@
-# TLS: ECH support in curl and libcurl
+# TLS: ECH support in *curl* and *libcurl*
 
 ## Summary
 
-**ECH** means **Encrypted Client Hello**, a TLS 1.3 extension which is
-currently the subject of an [IETF Draft][tlsesni]. (ECH was formerly known as
-ESNI).
+- **ECH (Encrypted Client Hello)**:
 
-This file is intended to show the latest current state of ECH support
-in **curl** and **libcurl**.
+    proposed privacy-enhancing TLS 1.3 extension.
 
-At end of August 2019, an [experimental fork of curl][niallorcurl], built
-using an [experimental fork of OpenSSL][sftcdopenssl], which in turn provided
-an implementation of ECH, was demonstrated interoperating with a server
-belonging to the [DEfO Project][defoproj].
+- **ESNI (Encrypted Server Name Indication)**:
 
-Further sections here describe
+    earlier work, with narrower scope, now re-purposed as ECH.
 
--   resources needed for building and demonstrating **curl** support
-    for ECH,
+- **ECHCONFIG**:
 
--   progress to date,
+    data structure which carries the configuration to be used in
+    setting up a TLS connection using ECH; can be published in the DNS
+    using an SVCB-compatible RR type.
 
--   TODO items, and
+- **SVCB (Service Binding)**:
 
--   additional details of specific stages of the progress.
+    DNS RR type intended as a base type for defining other,
+    service-specific, **SVCB-compatible** RR types; allows a service
+    client to discover, for a given service origin, alternative
+    endpoints and corresponding connection parameters.
 
-## Resources needed
+- **DNS HTTPS RR type**:
 
-To build and demonstrate ECH support in **curl** and/or **libcurl**,
-you will need
+    SVCB-compatible RR type which provides special handling for
+    **https** and **http** origins.
 
--   a TLS library, supported by **libcurl**, which implements ECH;
+- **SVCB resolution**:
 
--   an edition of **curl** and/or **libcurl** which supports the ECH
-    implementation of the chosen TLS library;
+    Extended DNS resolution retrieving other necessary connection
+    parameters in addition to IP addresses.
 
--   an environment for building and running **curl**, and at least
-    building **OpenSSL**;
+## Specification
 
--   a server, supporting ECH, against which to run a demonstration
-    and perhaps a specific target URL;
+No standards are yet (mid-2021) available.
 
--   some instructions.
+- [IETF ECH draft][tlsesni]
 
-The following set of resources is currently known to be available.
+- [IETF SVCB/HTTPS draft][svcbhttps]
 
-| Set  | Component    | Location                      | Remarks                                    |
-|:-----|:-------------|:------------------------------|:-------------------------------------------|
-| DEfO | TLS library  | [sftcd/openssl][sftcdopenssl] | Tag *esni-2019-08-30* avoids bleeding edge |
-|      | curl fork    | [niallor/curl][niallorcurl]   | Tag *esni-2019-08-30* likewise             |
-|      | instructions | [ESNI-README][niallorreadme]  |                                            |
+## Proof of concept (April 2021)
 
-## Progress
+Instructions are [documented separately][howto-ech]
 
-### PR 4011 (Jun 2019) expected in curl release 7.67.0 (Oct 2019)
+- [OpenSSL fork][sftcd/openssl] implementing ECH
 
--   Details [below](#pr4011);
+- [Curl fork][niallor/curl] supporting ECH using wrapper script and OpenSSL
 
--   New configuration option: `--enable-ech`;
+- Wrapper script performing SVCB resolution and feeding configuration
+  data in CLI option to *curl*
 
--   Build-time check for availability of resources needed for ECH
-    support;
-
--   Pre-processor symbol `USE_ECH` for conditional compilation of
-    ECH support code, subject to configuration option and
-    availability of needed resources.
+- Interoperation with [Cloudflare demonstration service][cfdemo]
 
 ## TODO
 
--   (next PR) Add libcurl options to set ECH parameters.
+- Provide SVCB resolution within *libcurl*
 
--   (next PR) Add curl tool command line options to set ECH parameters.
+- Extend DNS cacheing in *libcurl* to accommodate results of SVCB
+  resolution.
 
--   (WIP) Extend DoH functions so that published ECH parameters can be
-    retrieved from DNS instead of being required as options.
+- Use results of SVCB resolution to drive endpoint discovery and ECH,
+  and to optimize alt-svc negotiation.
 
--   (WIP) Work with OpenSSL community to finalize ECH API.
 
--   Track OpenSSL ECH API in libcurl
-
--   Identify and implement any changes needed for CMake.
-
--   Optimize build-time checking of available resources.
-
--   Encourage ECH support work on other TLS/SSL backends.
-
-## Additional detail
-
-### PR 4011
-
-**TLS: Provide ECH support framework for curl and libcurl**
-
-The proposed change provides a framework to facilitate work to implement ECH
-support in curl and libcurl. It is not intended either to provide ECH
-functionality or to favour any particular TLS-providing backend. Specifically,
-the change reserves a feature bit for ECH support (symbol
-`CURL_VERSION_ECH`), implements setting and reporting of this bit, includes
-dummy book-keeping for the symbol, adds a build-time configuration option
-(`--enable-ech`), provides an extensible check for resources available to
-provide ECH support, and defines a compiler pre-processor symbol (`USE_ECH`)
-accordingly.
-
-Proposed-by: @niallor (Niall O'Reilly)\
-Encouraged-by: @sftcd (Stephen Farrell)\
-See-also: [this message](https://curl.se/mail/lib-2019-05/0108.html)
-
-Limitations:
--   Book-keeping (symbols-in-versions) needs real release number, not 'DUMMY'.
-
--   Framework is incomplete, as it covers autoconf, but not CMake.
-
--   Check for available resources, although extensible, refers only to
-    specific work in progress ([described
-    here](https://github.com/sftcd/openssl/tree/master/esnistuff)) to
-    implement ECH for OpenSSL, as this is the immediate motivation
-    for the proposed change.
-
-## References
-
-Cloudflare blog: [Encrypting SNI: Fixing One of the Core Internet Bugs][corebug]
-
-Cloudflare blog: [Encrypt it or lose it: how encrypted SNI works][esniworks]
-
-IETF Draft: [Encrypted Server Name Indication for TLS 1.3][tlsesni]
 
 ---
 
-[tlsesni]:		https://datatracker.ietf.org/doc/draft-ietf-tls-esni/
-[esniworks]:	https://blog.cloudflare.com/encrypted-sni/
-[corebug]:		https://blog.cloudflare.com/esni/
-[defoproj]:		https://defo.ie/
-[sftcdopenssl]: https://github.com/sftcd/openssl/
-[niallorcurl]:	https://github.com/niallor/curl/
-[niallorreadme]: https://github.com/niallor/curl/blob/master/ESNI-README.md
+[tlsesni]:		 https://datatracker.ietf.org/doc/draft-ietf-tls-esni/
+[svcbhttps]:     https://datatracker.ietf.org/doc/draft-ietf-dnsop-svcb-https/
+[cfechdemo]:     https://crypto.cloudflare.com//cdn-cgi/trace
+[sftcd/openssl]: https://github.com/sftcd/openssl/
+[niallor/curl]:  https://github.com/niallor/curl/
+[rthalley/dnspython]: https://github.com/rthalley/dnspython
+[howto-ech]:     HOWTO-ECH.md
