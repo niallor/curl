@@ -1550,6 +1550,7 @@ enum dupstring {
   STRING_ECH_CONFIG,            /* CURLOPT_ECH_CONFIG
                                  * TODO: packages/OS400/chkstring.c
                                  */
+  STRING_ECH_PUBLIC,            /* CURLOPT_ECH_PUBLIC */
 
   /* -- end of null-terminated strings -- */
 

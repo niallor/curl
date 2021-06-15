@@ -3163,6 +3163,12 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     if(result)
       return result;
     break;
+  case CURLOPT_ECH_PUBLIC:
+    argptr = va_arg(param, char *);
+    result = Curl_setstropt(&data->set.str[STRING_ECH_PUBLIC], argptr);
+    if(result)
+      return result;
+    break;
 #endif
   default:
     /* unknown tag and its companion, just ignore: */

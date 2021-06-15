@@ -53,6 +53,7 @@ CURL *curl = curl_easy_init();
 if(curl) {
   curl_easy_setopt(curl, CURLOPT_ECH_STATUS, 1L);
   curl_easy_setopt(curl, CURLOPT_ECH_CONFIG, ascii_encoded_echconfig);
+  curl_easy_setopt(curl, CURLOPT_ECH_PUBLIC, ascii_host_name); # OPTIONAL
   curl_easy_perform(curl);
 }
 .fi
@@ -61,4 +62,4 @@ To be added in a FUTURE release
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_ECH_CONFIG "(3)
+.BR CURLOPT_ECH_CONFIG "(3), " CURLOPT_ECH_PUBLIC "(3), "

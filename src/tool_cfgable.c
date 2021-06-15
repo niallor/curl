@@ -175,6 +175,8 @@ static void free_config_fields(struct OperationConfig *config)
 #ifdef USE_ECH
   Curl_safefree(config->ech_config);
   config->ech_config = NULL;
+  Curl_safefree(config->ech_public);
+  config->ech_public = NULL;
   config->ech_status.word = 0;
 #endif
 }

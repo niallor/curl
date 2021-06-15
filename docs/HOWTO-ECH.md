@@ -167,6 +167,17 @@ disabling ECH.
 In this case, the demonstration host output includes the indication
 `sni=plaintext`.
 
+If desired, the wrapper script can pass the `--echpublic` option to
+*curl*, over-riding the ECH.public_name component of the ECH
+configuration. The effect of this will be hidden unless either the
+`--verbose` option is also passed to *curl* or the packets exchanged
+with the server host are captured.
+
+    $ $HOME/bin/svcbwrap src/curl \
+        --passthrough=--verbose \
+        --passthrough='--echpublic any.old.example' \
+        https://crypto.cloudflare.com/cdn-cgi/trace
+
 The `--dry-run` (`-n`) option to the wrapper script causes it to
 display the generated command which would be used to invoke curl.
 

@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2021, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,14 +20,14 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_ECH_CONFIG 3 "15 Jun 2021" "libcurl FUTURE" "curl_easy_setopt options"
+.TH CURLOPT_ECH_PUBLIC 3 "15 Jun 2021" "libcurl FUTURE" "curl_easy_setopt options"
 .SH NAME
-CURLOPT_ECH_CONFIG \- specify the configuration data to use for ECH
+CURLOPT_ECH_PUBLIC \- specify the public (outer) SNI hostname to use for ECH
 .SH SYNOPSIS
 .nf
 #include <curl/curl.h>
 
-CURLcode curl_easy_setopt(CURL *handle, CURLOPT_ECH_CONFIG, char *blob);
+CURLcode curl_easy_setopt(CURL *handle, CURLOPT_ECH_PUBLIC, char *hostname);
 .fi
 .SH EXPERIMENTAL
 Warning: this feature is early code and is marked as experimental. It can only
@@ -35,17 +35,9 @@ be enabled by explicitly telling configure with \fB--enable-ech\fP. You are
 advised to not ship this in production before the experimental label is
 removed.
 .SH DESCRIPTION
-Pass in a pointer to a string representing, in base64 or hexadecimal
-encoding, one or more ECH configuration data structures to be used for
-setting up the TLS connection.  For ECH processing, these data are
-REQUIRED, and must be specified using this option as support is not
-yet available for automatic discovery of service-binding (SVCB) data
-from the DNS.
-
-Multiple ECH configuration data structures may be specified using
-hexadecimal encoding by simply concatenating the individual encoded
-strings, or using base-64 encoding by using a semicolon between each
-individual encoded string and the following one.
+Optionally pass in a pointer to a string to be used as the public SNI
+hostname to used in the outer (plaintext) Client Hello when using ECH,
+over-riding any public name specified by CURLOPT_ECH_CONFIG.
 .SH DEFAULT
 NULL. No ECH configuration data are specified.
 .SH PROTOCOLS

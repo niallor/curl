@@ -291,6 +291,7 @@ static const struct LongShort aliases[]= {
          /* "EK" is as good a choice of starting point
           * for ECH-related short names as any. */
   {"EL", "echconfig",                ARG_FILENAME},
+  {"EM", "echpublic",                ARG_STRING},
 #endif
   {"f",  "fail",                     ARG_BOOL},
   {"fa", "fail-early",               ARG_BOOL},
@@ -1977,7 +1978,7 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
             if(!file) {
               warnf(global,
                     "Couldn't read file \"%s\" "
-                    "specified for \"--ech_config\" option",
+                    "specified for \"--echconfig\" option",
                     nextarg);
               return PARAM_BAD_USE; /*  */
             }
@@ -1989,6 +1990,12 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
               return err;
           } /* file done */
         }
+        break;
+
+      case 'M':
+        /* --echpublic */
+        /* String data to over-ride (or fill for missing) ECH.public_name */
+        GetStr(&config->ech_public, nextarg);
         break;
 #endif
 

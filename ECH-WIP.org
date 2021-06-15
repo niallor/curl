@@ -106,6 +106,24 @@
     :PROPERTIES:
     :target:  lib/vtls/openssl.c (calls to OpenSSL code)
     :END:
+*** NEXT Declare and document additional libcurl option
+    :PROPERTIES:
+    :target:  include/curl/curl.h
+    :target+: docs/libcurl/symbols-in-versions
+    :target+: docs/libcurl/opts/Makefile.inc
+    :target+: docs/libcurl/opts/CURLOPT_ECH_CONFIG.3
+    :target+: docs/libcurl/opts/CURLOPT_ECH_PUBLIC.3
+    :target+: docs/libcurl/opts/CURLOPT_ECH_STATUS.3
+    :target+: lib/urldata.h
+    :target+: lib/ech.c
+    :target+: lib/vtls/openssl.c
+    :target+: lib/setopt.c
+    :target+: src/tool_cfgable.h
+    :target+: src/tool_operate.c
+    :target+: src/tool_getparam.c
+    :target+: src/tool_help.c
+    :target+: src/tool_cfgable.c
+    :END:
 *** TODO Review other changes made for ESNI-demo
 
 - lib/doh.c

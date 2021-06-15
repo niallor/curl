@@ -226,6 +226,9 @@ static const struct helptxt helptext[] = {
   {"    --echconfig <base64/@filename>", /* style: or --ech-config ? */
    "Pass echconfig data, over-riding DNS",
   CURLHELP_TLS},
+  {"    --echpublic <host>", /* style: or --ech-public ? */
+   "Pass echpublic data, over-riding echconfig",
+  CURLHELP_TLS},
 #endif
   {"    --egd-file <file>",
    "EGD socket path for random data",

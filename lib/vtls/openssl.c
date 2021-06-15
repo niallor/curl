@@ -3768,7 +3768,7 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
 #ifdef USE_ECH
   if(data->set.tls_enable_ech) {
     char *ech_config = data->set.str[STRING_ECH_CONFIG];
-    char *outername = "splodge.local"; /* until we define option */
+    char *outername = data->set.str[STRING_ECH_PUBLIC];
     bool value_error = FALSE;
     int nechs;
     int rv;
@@ -3776,11 +3776,17 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
     if(value_error)
       return CURLE_SSL_CONNECT_ERROR;
 
-    infof(data,
-          "ECH: will use hostname '%s' as ECH inner name\n"
-          "  ECH: will use string '%s' as ECH outer name\n",
-          hostname,
-          outername);
+    if(outername)
+      infof(data,
+            "ECH: will use hostname '%s' as ECH inner name\n"
+            "  ECH: will use string '%s' as ECH outer name\n",
+            hostname,
+            outername);
+    else
+      infof(data,
+            "ECH: will use hostname '%s' as ECH inner name\n"
+            "       and configured ECH.public_name as ECH outer name\n",
+            hostname);
     rv = SSL_ech_server_name(backend->handle,
                              hostname, /* ech_inner_name (again) */
                              outername /* ech_outer_name */

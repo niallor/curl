@@ -2164,6 +2164,8 @@ static CURLcode single_transfer(struct GlobalConfig *global,
 
           /* ECH options were already checked, so load-data is set */
           my_setopt_str(curl, CURLOPT_ECH_CONFIG, config->ech_config);
+          if(config->ech_public) /* only if set (optional) */
+            my_setopt_str(curl, CURLOPT_ECH_PUBLIC, config->ech_public);
         }
 #endif
 

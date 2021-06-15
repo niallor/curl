@@ -163,6 +163,7 @@ man_MANS =                                      \
   CURLOPT_DOH_SSL_VERIFYSTATUS.3                \
   CURLOPT_DOH_URL.3                             \
   CURLOPT_ECH_CONFIG.3                          \
+  CURLOPT_ECH_PUBLIC.3                          \
   CURLOPT_ECH_STATUS.3                          \
   CURLOPT_EGDSOCKET.3                           \
   CURLOPT_ERRORBUFFER.3                         \

@@ -616,6 +616,7 @@ CURLOPT_EGDSOCKET               7.7           7.84.0
 CURLOPT_ENCODING                7.10          7.21.6
 CURLOPT_ECH_STATUS              DUMMY
 CURLOPT_ECH_CONFIG              DUMMY
+CURLOPT_ECH_PUBLIC              DUMMY
 CURLECH_ENABLE                  DUMMY
 CURLECH_INVALID                 DUMMY
 CURLOPT_EGDSOCKET               7.7

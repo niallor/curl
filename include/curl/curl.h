@@ -2218,6 +2218,9 @@ typedef enum {
   /* TODO: consider using binary only, or as third alternative */
   CURLOPT(CURLOPT_ECH_CONFIG, CURLOPTTYPE_STRINGPOINT, 339),
 
+  /* ECH public name for outer SNI in ECH */
+  CURLOPT(CURLOPT_ECH_PUBLIC, CURLOPTTYPE_STRINGPOINT, 311),
+
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 
