@@ -305,6 +305,7 @@ struct OperationConfig {
     } flags;
   } ech_status;
   char *ech_config;               /* Set by --echconfig option */
+  char *ech_public;               /* Set by --echpublic option */
 #endif
   struct GlobalConfig *global;
   struct OperationConfig *prev;
