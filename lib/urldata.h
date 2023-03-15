@@ -1867,8 +1867,7 @@ struct UserDefined {
   BIT(http09_allowed); /* allow HTTP/0.9 responses */
 #ifdef USE_WEBSOCKETS
   BIT(ws_raw_mode);
-  BIT(mail_rcpt_allowfails); /* allow RCPT TO command to fail for some
-                                recipients */
+#endif
 #ifdef USE_ECH
   BIT(tls_enable_ech);     /* TLS ECH extension  */
 #endif
