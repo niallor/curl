@@ -2169,23 +2169,6 @@ static CURLcode single_transfer(struct GlobalConfig *global,
         }
 #endif
 
-#ifdef USE_METALINK
-        if(!metalink && config->use_metalink) {
-          outs->metalink_parser = metalink_parser_context_new();
-          if(!outs->metalink_parser) {
-            result = CURLE_OUT_OF_MEMORY;
-            break;
-          }
-          fprintf(global->errors,
-                  "Metalink: parsing (%s) metalink/XML...\n", per->this_url);
-        }
-        else if(metalink)
-          fprintf(global->errors,
-                  "Metalink: fetching (%s) from (%s)...\n",
-                  mlfile->filename, per->this_url);
-#endif /* USE_METALINK */
-
-        per->metalink = metalink;
         /* initialize retry vars for loop below */
         per->retry_sleep_default = (config->retry_delay) ?
           config->retry_delay*1000L : RETRY_SLEEP_DEFAULT; /* ms */
@@ -2776,6 +2759,8 @@ CURLcode operate(struct GlobalConfig *global, int argc, argv_item_t argv[])
         curl_share_setopt(share, CURLSHOPT_SHARE, CURL_LOCK_DATA_CONNECT);
         curl_share_setopt(share, CURLSHOPT_SHARE, CURL_LOCK_DATA_PSL);
         curl_share_setopt(share, CURLSHOPT_SHARE, CURL_LOCK_DATA_HSTS);
+
+        /* TODO: determine whether ECH options need to be shared */
 
         /* Get the required arguments for each operation */
         do {
