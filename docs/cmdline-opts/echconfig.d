@@ -4,7 +4,7 @@ Long: echconfig
 Help: ECH configuration data
 Arg: <string/@file>
 Protocols: TLS
-Added: DUMMY
+Added: 8.0.0-DEV
 See-also: ech
 Category: tls
 Example: --echconfig ENCODED_ECHCONFIG $URL

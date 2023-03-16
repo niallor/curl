@@ -3,7 +3,7 @@ SPDX-License-Identifier: curl
 Long: ech
 Help: Use encrypted Client Hello
 Protocols: TLS
-Added: DUMMY
+Added: 8.0.0-DEV
 See-also: echconfig
 Category: tls
 Example: --ech $URL

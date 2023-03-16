@@ -56,6 +56,8 @@
 --dump-header (-D)                   5.7
 --egd-file                           7.7
 --engine                             7.9.3
+--ech                                8.0.0-DEV
+--echconfig                          8.0.0-DEV
 --etag-compare                       7.68.0
 --etag-save                          7.68.0
 --expect100-timeout                  7.47.0

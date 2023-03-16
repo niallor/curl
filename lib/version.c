@@ -445,6 +445,9 @@ static const struct feat features_table[] = {
 #ifdef DEBUGBUILD
   FEATURE("Debug",       NULL,                CURL_VERSION_DEBUG),
 #endif
+#ifdef USE_ECH
+  FEATURE("ech",         NULL,                CURL_VERSION_ECH),
+#endif
 #ifdef USE_GSASL
   FEATURE("gsasl",       NULL,                CURL_VERSION_GSASL),
 #endif
@@ -614,7 +617,7 @@ static curl_version_info_data version_info = {
 #endif
 #ifdef USE_ECH
   | CURL_VERSION_ECH
- #endif
+#endif
   ,
   NULL, /* ssl_version */
   0,    /* ssl_version_num, this is kept at zero */
