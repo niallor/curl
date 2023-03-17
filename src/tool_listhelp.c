@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) Daniel Stenberg, <daniel.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -165,6 +165,15 @@ const struct helptxt helptext[] = {
   {"-D, --dump-header <filename>",
    "Write the received headers to <filename>",
    CURLHELP_HTTP | CURLHELP_FTP},
+  {"    --ech",
+   "Use encrypted Client Hello",
+   CURLHELP_TLS},
+  {"    --echconfig <string/@file>",
+   "ECH configuration data",
+   CURLHELP_TLS},
+  {"    --echpublic <string/@file>",
+   "Public SNI name to use instead of authority hostname",
+   CURLHELP_TLS},
   {"    --egd-file <file>",
    "EGD socket path for random data",
    CURLHELP_TLS},
