@@ -70,6 +70,7 @@ DPAGES = \
   dump-header.d \
   ech.d \
   echconfig.d \
+  echpublic.d \
   egd-file.d \
   engine.d \
   etag-compare.d \
