@@ -65,16 +65,16 @@ bool Curl_ech_ready(struct Curl_easy *data)
   if(data->set.tls_enable_ech) {
     /* ECH enabled: look for what will be needed */
     if(!data->set.str[STRING_ECH_CONFIG]) {
-      infof(data, "WARNING: missing value for STRING_ECH_CONFIG\n");
+      infof(data, "WARNING: missing value for STRING_ECH_CONFIG");
       ready = FALSE;
     }
     else {
-      infof(data, "ECH: found STRING_ECH_CONFIG:\n");
-      infof(data, " %s\n", data->set.str[STRING_ECH_CONFIG]);
+      infof(data, "ECH: found STRING_ECH_CONFIG:");
+      infof(data, " %s", data->set.str[STRING_ECH_CONFIG]);
       if(data->set.str[STRING_ECH_PUBLIC]) {
         /* Optional STRING_ECH_PUBLIC: report if set */
-        infof(data, "ECH: found STRING_ECH_PUBLIC:\n");
-        infof(data, " %s\n", data->set.str[STRING_ECH_PUBLIC]);
+        infof(data, "ECH: found STRING_ECH_PUBLIC:");
+        infof(data, " %s", data->set.str[STRING_ECH_PUBLIC]);
       }
     }
 

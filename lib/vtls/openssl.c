@@ -3778,38 +3778,38 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
 
     if(outername)
       infof(data,
-            "ECH: will use hostname '%s' as ECH inner name\n"
-            "  ECH: will use string '%s' as ECH outer name\n",
-            hostname,
+            "ECH: will use hostname '%s' as ECH inner name%s"
+            "  ECH: will use string '%s' as ECH outer name",
+            hostname, "\n",
             outername);
     else
       infof(data,
-            "ECH: will use hostname '%s' as ECH inner name\n"
-            "       and configured ECH.public_name as ECH outer name\n",
-            hostname);
+            "ECH: will use hostname '%s' as ECH inner name%s"
+            "       and configured ECH.public_name as ECH outer name",
+            hostname, "\n");
     rv = SSL_ech_server_name(backend->handle,
                              hostname, /* ech_inner_name (again) */
                              outername /* ech_outer_name */
                              );
-    infof(data, "ECH: rv %d from SSL_ech_server_name()\n", rv);
+    infof(data, "ECH: rv %d from SSL_ech_server_name()", rv);
 
     /* NB! invoke SSL_ech_server_name() BEFORE SSL_ech_add() */
 
     rv = SSL_ech_add(backend->handle, ECH_FMT_GUESS,
                      strlen(ech_config), ech_config, &nechs);
     if(rv != 1) {
-      infof(data, "ECH: rv %d from SSL_ech_add() [ERROR]\n", rv);
+      infof(data, "ECH: rv %d from SSL_ech_add() [ERROR]", rv);
       return CURLE_SSL_CONNECT_ERROR;
     }
     else {
-      infof(data, "ECH: rv %d from SSL_ech_add() [OK]\n", rv);
+      infof(data, "ECH: rv %d from SSL_ech_add() [OK]", rv);
     }
     if(!nechs) {
-      infof(data, "ECH: nechs %d from SSL_ech_add() [ERROR]\n", rv);
+      infof(data, "ECH: nechs %d from SSL_ech_add() [ERROR]", rv);
       return CURLE_SSL_CONNECT_ERROR;
     }
     else {
-      infof(data, "ECH: nechs %d from SSL_ech_add() [OK]\n", nechs);
+      infof(data, "ECH: nechs %d from SSL_ech_add() [OK]", nechs);
     }
   }
 #endif  /* USE_ECH */
@@ -3854,7 +3854,7 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
 #endif
   connssl->connecting_state = ssl_connect_2;
 
-  infof(data, "ossl_connect_step1() returning CURLE_OK\n");
+  infof(data, "ossl_connect_step1() returning CURLE_OK");
 
   return CURLE_OK;
 }
@@ -3873,7 +3873,7 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
 
   ERR_clear_error();
 
-  infof(data, "ossl_connect_step2() starting\n");
+  infof(data, "ossl_connect_step2() starting");
 
   err = SSL_connect(backend->handle);
 
@@ -3900,7 +3900,7 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
      <0 is "handshake was not successful, because a fatal error occurred" */
   if(1 != err) {
     int detail = SSL_get_error(backend->handle, err);
-    infof(data, "SSL_connect() returned %d, detail %d\n", err, detail);
+    infof(data, "SSL_connect() returned %d, detail %d", err, detail);
 
     if(SSL_ERROR_WANT_READ == detail) {
       connssl->connecting_state = ssl_connect_2_reading;
@@ -3928,7 +3928,7 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
       int lib;
       int reason;
 
-      infof(data, "ossl_connect_step2(): detail is 'untreated error'\n");
+      infof(data, "ossl_connect_step2(): detail is 'untreated error'");
 
       /* the connection failed, we're not waiting for anything else. */
       connssl->connecting_state = ssl_connect_2;
@@ -4022,7 +4022,7 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
     }
 #endif
 
-    infof(data, "ossl_connect_step2() returning CURLE_OK\n");
+    infof(data, "ossl_connect_step2() returning CURLE_OK");
 
     return CURLE_OK;
   }
