@@ -3787,30 +3787,60 @@ static CURLcode ossl_connect_step1(struct Curl_cfilter *cf,
             "ECH: will use hostname '%s' as ECH inner name%s"
             "       and configured ECH.public_name as ECH outer name",
             hostname, "\n");
-    rv = SSL_ech_server_name(backend->handle,
-                             hostname, /* ech_inner_name (again) */
-                             outername /* ech_outer_name */
-                             );
-    infof(data, "ECH: rv %d from SSL_ech_server_name()", rv);
+    /* rv = SSL_ech_server_name(backend->handle, */
+    /*                          hostname, /\* ech_inner_name (again) *\/ */
+    /*                          outername /\* ech_outer_name *\/ */
+    /*                          ); */
+    /* infof(data, "ECH: rv %d from SSL_ech_server_name()", rv); */
+
+    /* GUESSING how to refactor for -13c */
+    rv = SSL_ech_set_server_names(backend->handle,
+                                  hostname,  /* ech_inner_name (again) */
+                                  outername, /* ech_outer_name */
+                                  0          /* TBD: CHECK THIS!!! */
+                                  );
+    infof(data, "ECH: rv %d from SSL_ech_set_server_names()", rv);
+
+    /* --- */
 
     /* NB! invoke SSL_ech_server_name() BEFORE SSL_ech_add() */
 
-    rv = SSL_ech_add(backend->handle, ECH_FMT_GUESS,
-                     strlen(ech_config), ech_config, &nechs);
+    /* rv = SSL_ech_add(backend->handle, ECH_FMT_GUESS, */
+    /*                  strlen(ech_config), ech_config, &nechs); */
+    /* if(rv != 1) { */
+    /*   infof(data, "ECH: rv %d from SSL_ech_add() [ERROR]", rv); */
+    /*   return CURLE_SSL_CONNECT_ERROR; */
+    /* } */
+    /* else { */
+    /*   infof(data, "ECH: rv %d from SSL_ech_add() [OK]", rv); */
+    /* } */
+    /* if(!nechs) { */
+    /*   infof(data, "ECH: nechs %d from SSL_ech_add() [ERROR]", rv); */
+    /*   return CURLE_SSL_CONNECT_ERROR; */
+    /* } */
+    /* else { */
+    /*   infof(data, "ECH: nechs %d from SSL_ech_add() [OK]", nechs); */
+    /* } */
+
+    /* GUESSING how to refactor for -13c */
+    rv = SSL_ech_set1_echconfig(backend->handle,
+                                ech_config,
+                                strlen(ech_config));
     if(rv != 1) {
-      infof(data, "ECH: rv %d from SSL_ech_add() [ERROR]", rv);
+      infof(data, "ECH: rv %d from SSL_ech_set1_echconfig() [ERROR]", rv);
       return CURLE_SSL_CONNECT_ERROR;
     }
     else {
-      infof(data, "ECH: rv %d from SSL_ech_add() [OK]", rv);
+      infof(data, "ECH: rv %d from SSL_ech_set1_echconfig() [OK]", rv);
     }
     if(!nechs) {
-      infof(data, "ECH: nechs %d from SSL_ech_add() [ERROR]", rv);
+      infof(data, "ECH: nechs %d from SSL_ech_set1_echconfig() [ERROR]", rv);
       return CURLE_SSL_CONNECT_ERROR;
     }
     else {
-      infof(data, "ECH: nechs %d from SSL_ech_add() [OK]", nechs);
+      infof(data, "ECH: nechs %d from SSL_ech_set1_echconfig() [OK]", nechs);
     }
+    /* --- */
   }
 #endif  /* USE_ECH */
 #endif  /* SSL_CTRL_SET_TLSEXT_HOSTNAME */
