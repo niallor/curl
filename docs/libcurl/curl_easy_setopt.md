@@ -1359,6 +1359,12 @@ int main(void)
 }
 ~~~
 
+# ENCRYPTED CLIENT HELLO OPTIONS
+
+## CURLOPT_ECH
+
+Set the configuration for ECH. See CURLOPT_ECH(3)
+
 # AVAILABILITY
 
 Always
