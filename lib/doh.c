@@ -744,7 +744,6 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
           return DOH_DNS_MALFORMAT; /* QDCOUNT may not exceed 1 */
         if(type != dnstype)
           return DOH_DNS_UNEXPECTED_TYPE;
-        index += 4; /* skip question's type and class */
       }
 
       else {
