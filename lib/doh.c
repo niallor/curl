@@ -707,6 +707,7 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
   unsigned short nscount;
   unsigned short arcount;
   unsigned int index = 4;
+  unsigned int sect;
   unsigned int sncount[4];
   unsigned int rrcount = 0;
   unsigned int *countpt;
@@ -725,7 +726,7 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
 
   /* TODO: allocate rrmap with rrcount entries */
 
-  for(index = 12, int sect=0; sect < 4; sect++) {
+  for(index = 12, sect = 0; sect < 4; sect++) {
     unsigned int count = sncount[sect];
     while(count) {
       rc = skipqname(doh, dohlen, &index);
@@ -733,7 +734,7 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
         return rc;
       if(dohlen < index + (sect ? 10 : 4))
         return DOH_DNS_OUT_OF_RANGE;
-      if(get16bit(doh, index+2) != DNS_CLASS)
+      if(get16bit(doh, index + 2) != 1)
         return DOH_DNS_UNEXPECTED_CLASS; /* unsupported */
       type = get16bit(doh, index);
       index += 4;               /* advance past TYPE, CLASS */
@@ -748,7 +749,7 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
 
       else {
         unsigned int ttl = get32bit(doh, index);
-        rdlength = get16bit(doh, index+4);
+        rdlength = get16bit(doh, index + 4);
         index += 6;             /* advance past TTL, RDLENGTH */
         if(dohlen < index + rdlength)
           return DOH_DNS_OUT_OF_RANGE;
