@@ -760,15 +760,20 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
             /* Not the same type as was asked for nor CNAME nor DNAME */
             return DOH_DNS_UNEXPECTED_TYPE;
 
-          /* rc = new_rdata(doh, dohlen, rdlength, type, index, d); */
+#ifndef USE_OLD_DOH_DECODE
+          rc = rdata(doh, dohlen, rdlength, type, index, d);
           if(rc)
             return rc; /* bad rdata */
+#endif
+
           index += rdlength;
         }
       }
       count--;
     }
   }
+
+#ifdef USE_OLD_DOH_DECODE
 
   index = 12;                   /* initial condition for old code */
 
@@ -876,6 +881,8 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
     index += rdlength;
     arcount--;
   }
+
+#endif
 
   if(index != dohlen)
     return DOH_DNS_MALFORMAT; /* something is wrong */
