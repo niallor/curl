@@ -706,8 +706,11 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
   unsigned short rdlength;
   unsigned short nscount;
   unsigned short arcount;
-  unsigned int index = 12;
-  DOHcode rc;
+  unsigned int index = 4;
+  unsigned int sncount[4];
+  unsigned int rrcount = 0;
+  unsigned int *countpt;
+  DOHcode rc = 0;
 
   if(dohlen < 12)
     return DOH_TOO_SMALL_BUFFER; /* too small */
@@ -716,6 +719,58 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
   rcode = doh[3] & 0x0f;
   if(rcode)
     return DOH_DNS_BAD_RCODE; /* bad rcode */
+
+  for(countpt = sncount, index = 4; index < 12; index += 2)
+    rrcount += (*countpt++ = get16bit(doh, index));
+
+  /* TODO: allocate rrmap with rrcount entries */
+
+  for(index = 12, int sect=0; sect < 4; sect++) {
+    unsigned int count = sncount[sect];
+    while(count) {
+      rc = skipqname(doh, dohlen, &index);
+      if(rc)
+        return rc;
+      if(dohlen < index + (sect ? 10 : 4))
+        return DOH_DNS_OUT_OF_RANGE;
+      if(get16bit(doh, index+2) != DNS_CLASS)
+        return DOH_DNS_UNEXPECTED_CLASS; /* unsupported */
+      type = get16bit(doh, index);
+      index += 4;               /* advance past TYPE, CLASS */
+
+      if(sect == 0) {           /* Question section */
+        if(count > 1)
+          return DOH_DNS_MALFORMAT; /* QDCOUNT may not exceed 1 */
+        if(type != dnstype)
+          return DOH_DNS_UNEXPECTED_TYPE;
+        index += 4; /* skip question's type and class */
+      }
+
+      else {
+        unsigned int ttl = get32bit(doh, index);
+        rdlength = get16bit(doh, index+4);
+        index += 6;             /* advance past TTL, RDLENGTH */
+        if(dohlen < index + rdlength)
+          return DOH_DNS_OUT_OF_RANGE;
+
+        if(sect == 1) {      /* Answer section */
+          if((type != DNS_TYPE_CNAME)    /* may be synthesized from DNAME */
+             && (type != DNS_TYPE_DNAME) /* if present, accept and ignore */
+             && (type != dnstype))
+            /* Not the same type as was asked for nor CNAME nor DNAME */
+            return DOH_DNS_UNEXPECTED_TYPE;
+
+          /* rc = new_rdata(doh, dohlen, rdlength, type, index, d); */
+          if(rc)
+            return rc; /* bad rdata */
+          index += rdlength;
+        }
+      }
+      count--;
+    }
+  }
+
+  index = 12;                   /* initial condition for old code */
 
   qdcount = get16bit(doh, 4);
   while(qdcount) {
