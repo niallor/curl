@@ -655,6 +655,7 @@ enum doh_slots {
   /* Space here for (possibly build-specific) additional slot definitions */
 #ifdef USE_HTTPSRR
   DOH_PROBE_SLOT_HTTPS = 2,     /* for HTTPS RR */
+  DOH_PROBE_SLOT_ALIAS = 3,     /* for alias chasing */
 #endif
 
   /* for example */

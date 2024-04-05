@@ -64,12 +64,13 @@ static const char * const errors[]={
   "Unexpected CLASS",
   "No content",
   "Bad ID",
-  "Name too long"
+  "Name too long",
+  "Alias pending"
 };
 
 static const char *doh_strerror(DOHcode code)
 {
-  if((code >= DOH_OK) && (code <= DOH_DNS_NAME_TOO_LONG))
+  if((code >= DOH_OK) && (code <= DOH_DNS_ALIAS_PENDING))
     return errors[code];
   return "bad error code";
 }
@@ -211,22 +212,46 @@ static void local_print_buf(struct Curl_easy *data,
 }
 #endif
 
+/* #ifdef USE_HTTPSRR */
+/* static CURLcode dohprobe(struct Curl_easy *, */
+/*                          struct dnsprobe *, DNStype, */
+/*                          const char *, */
+/*                          const char *, CURLM *, */
+/*                          struct curl_slist * */
+/*                          ); /\* forward declaration *\/ */
+/* #endif */
+
 /* called from multi.c when this DoH transfer is complete */
 static int doh_done(struct Curl_easy *doh, CURLcode result)
 {
   struct Curl_easy *data = doh->set.dohfor;
   struct dohdata *dohp = data->req.doh;
   /* so one of the DoH request done for the 'data' transfer is now complete! */
+
+  /* Hacking ... */
+  fprintf(stderr, " DoH request %p completed with result %d (%s)\n",
+          (void *)doh, result, curl_easy_strerror(result));
+
   dohp->pending--;
   infof(doh, "a DoH request is completed, %u to go", dohp->pending);
+
   if(result)
     infof(doh, "DoH request %s", curl_easy_strerror(result));
 
   if(!dohp->pending) {
     /* DoH completed */
-    curl_slist_free_all(dohp->headers);
-    dohp->headers = NULL;
-    Curl_expire(data, 0, EXPIRE_RUN_NOW);
+
+    /* As we may need to chase an alias,
+     *   freeing the headers now would be premature.
+     *
+     *   TODO: figure out when and how ...
+     */
+
+    /* curl_slist_free_all(dohp->headers); */
+    /* dohp->headers = NULL; */
+
+    /* Not sure whether to do this now */
+    /* Curl_expire(data, 0, EXPIRE_RUN_NOW); */
   }
   return 0;
 }
@@ -257,6 +282,7 @@ static CURLcode dohprobe(struct Curl_easy *data,
   }
 
   p->dnstype = dnstype;
+  p->in_work = 1;
   Curl_dyn_init(&p->serverdoh, DYN_DOH_RESPONSE);
 
   timeout_ms = Curl_timeleft(data, NULL, TRUE);
@@ -430,22 +456,36 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
   if(!dohp->headers)
     goto error;
 
+  de_init(&dohp->de);
+
+
   /* create IPv4 DoH request */
-  result = dohprobe(data, &dohp->probe[DOH_PROBE_SLOT_IPADDR_V4],
+  slot = DOH_PROBE_SLOT_IPADDR_V4;
+  result = dohprobe(data, &dohp->probe[slot],
                     DNS_TYPE_A, hostname, data->set.str[STRING_DOH],
                     data->multi, dohp->headers);
+
   if(result)
     goto error;
+
+  fprintf(stderr, " DoH request %p submitted for slot %d\n",
+          (void *)dohp->probe[slot].easy, slot);
+
   dohp->pending++;
 
 #ifdef ENABLE_IPV6
   if((conn->ip_version != CURL_IPRESOLVE_V4) && Curl_ipv6works(data)) {
     /* create IPv6 DoH request */
-    result = dohprobe(data, &dohp->probe[DOH_PROBE_SLOT_IPADDR_V6],
+    slot = DOH_PROBE_SLOT_IPADDR_V6;
+    result = dohprobe(data, &dohp->probe[slot],
                       DNS_TYPE_AAAA, hostname, data->set.str[STRING_DOH],
                       data->multi, dohp->headers);
     if(result)
       goto error;
+
+    fprintf(stderr, " DoH request %p submitted for slot %d\n",
+            (void *)dohp->probe[slot].easy, slot);
+
     dohp->pending++;
   }
 #endif
@@ -470,12 +510,17 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
       qname = aprintf("_%d._https.%s", port, hostname);
     if(!qname)
       goto error;
-    result = dohprobe(data, &dohp->probe[DOH_PROBE_SLOT_HTTPS],
+    slot = DOH_PROBE_SLOT_HTTPS;
+    result = dohprobe(data, &dohp->probe[slot],
                       DNS_TYPE_HTTPS, qname, data->set.str[STRING_DOH],
                       data->multi, dohp->headers);
     free(qname);
     if(result)
       goto error;
+
+    fprintf(stderr, " DoH request %p submitted for slot %d\n",
+            (void *)dohp->probe[slot].easy, slot);
+
     dohp->pending++;
   }
 # endif
@@ -536,6 +581,45 @@ static unsigned int get32bit(const unsigned char *doh, int index)
          ((unsigned)doh[2] << 8) | doh[3];
 }
 
+/* static DOHcode */
+/* dnsname_w2c(unsigned char *dstbuf, int dstlen, */
+/*             const unsigned char *doh, size_t dohlen, */
+/*             unsigned int pos) */
+/* { */
+/*   unsigned char length, i; */
+
+/*   do { */
+/*     if(dohlen < (pos + 1)) */
+/*       return DOH_DNS_OUT_OF_RANGE; */
+/*     length = doh[pos]; */
+/*     if((length & 0xc0) == 0xc0) { */
+/*       /\* name pointer *\/ */
+/*       if(dohlen < (pos + 2)) */
+/*         return DOH_DNS_OUT_OF_RANGE; */
+/*       /\* dereference and reposition *\/ */
+/*       pos = 0x3fff & get16bit(doh, pos); */
+/*       break; */
+/*     } */
+/*     if(length & 0xc0) */
+/*       return DOH_DNS_BAD_LABEL; */
+/*     if(dohlen < (pos + 1 + length)) */
+/*       return DOH_DNS_OUT_OF_RANGE; */
+/*     if(dstlen < 2 + length) */
+/*       return DOH_OUT_OF_MEM; */
+
+/*     /\* ready to stringify a label *\/ */
+/*     pos++;                        /\* advance past count *\/ */
+/*     for(i = 0; i < length; i++) { /\* for each character *\/ */
+/*       *dstbuf++ = doh[pos++];     /\* copy the character *\/ */
+/*       dstlen--;                   /\* count character out *\/ */
+/*     } */
+/*     *dstbuf++ = '.';              /\* place dot after label *\/ */
+/*     dstlen--;                     /\* count that out too *\/ */
+/*     *dstbuf = '\0';               /\* mark end of string *\/ */
+/*   } while(length); */
+/*   return DOH_OK; */
+/* } */
+
 static DOHcode store_a(const unsigned char *doh, int index, struct dohentry *d)
 {
   /* silently ignore addresses over the limit */
@@ -580,6 +664,76 @@ static DOHcode store_https(const unsigned char *doh,
   return DOH_OK;
 }
 #endif
+
+static DOHcode store_dnsname(const unsigned char *doh,
+                             size_t dohlen,
+                             unsigned int index,
+                             unsigned char *buf, size_t buflen)
+{
+  unsigned char *c;
+  unsigned int loop = 128; /* a valid DNS name can never loop this much */
+  unsigned char length;
+
+  c = buf;
+  do {
+    if(index >= dohlen)
+      return DOH_DNS_OUT_OF_RANGE;
+    length = doh[index];
+    if((length & 0xc0) == 0xc0) {
+      int newpos;
+      /* name pointer, get the new offset (14 bits) */
+      if((index + 1) >= dohlen)
+        return DOH_DNS_OUT_OF_RANGE;
+
+      /* move to the new index */
+      newpos = (length & 0x3f) << 8 | doh[index + 1];
+      index = newpos;
+      continue;
+    }
+    else if(length & 0xc0)
+      return DOH_DNS_BAD_LABEL; /* bad input */
+    else
+      index++;
+
+    if(length) {
+
+    /*   if(Curl_dyn_len(c)) { */
+    /*     if(Curl_dyn_addn(c, STRCONST("."))) */
+    /*       return DOH_OUT_OF_MEM; */
+    /*   } */
+    /*   if((index + length) > dohlen) */
+    /*     return DOH_DNS_BAD_LABEL; */
+
+    /*   if(Curl_dyn_addn(c, &doh[index], length)) */
+    /*     return DOH_OUT_OF_MEM; */
+
+      if(c > buf) {
+        if(buflen--)
+          *c++ = '.';
+        else
+          return DOH_OUT_OF_MEM;
+      }
+
+      if((index + length) > dohlen)
+        return DOH_DNS_BAD_LABEL;
+
+      if(length > dohlen)
+        return DOH_OUT_OF_MEM;
+      memcpy(c, doh + index, length);
+
+      c += length;
+      buflen -= length;
+      index += length;
+    }
+  } while(length && --loop);
+
+  if(!loop)
+    return DOH_DNS_LABEL_LOOP;
+  if(!buflen)
+    return DOH_OUT_OF_MEM;
+  *c = '\0';
+  return DOH_OK;
+}
 
 static DOHcode store_cname(const unsigned char *doh,
                            size_t dohlen,
@@ -689,6 +843,7 @@ UNITTEST void de_init(struct dohentry *de)
   int i;
   memset(de, 0, sizeof(*de));
   de->ttl = INT_MAX;
+  Curl_dyn_init(&de->targname, DYN_DOH_CNAME);
   for(i = 0; i < DOH_MAX_CNAME; i++)
     Curl_dyn_init(&de->cname[i], DYN_DOH_CNAME);
 }
@@ -700,201 +855,169 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
                             struct dohentry *d)
 {
   unsigned char rcode;
-  unsigned short qdcount;
-  unsigned short ancount;
   unsigned short type = 0;
+  unsigned int ttl;
   unsigned short rdlength;
-  unsigned short nscount;
-  unsigned short arcount;
   unsigned int index = 4;
   unsigned int sect;
-  unsigned int sncount[4];
-  unsigned int rrcount = 0;
+  unsigned int rrcount[4];
+  unsigned int rrtotal = 0;
   unsigned int *countpt;
+  struct RRmap *rrmap, *thisrr;
+  struct RRsetmap *rrsmap, *thisrrset;
+  unsigned char targname[256];
   DOHcode rc = 0;
+  int aliased = 0;
 
   if(dohlen < 12)
     return DOH_TOO_SMALL_BUFFER; /* too small */
   if(!doh || doh[0] || doh[1])
     return DOH_DNS_BAD_ID; /* bad ID */
   rcode = doh[3] & 0x0f;
-  if(rcode)
+  if(rcode) {
+    fprintf(stderr, " doh_decode: returning DOH_DNS_BAD_RCODE"
+            " because DNS RCODE is %d\n",
+            rcode);
     return DOH_DNS_BAD_RCODE; /* bad rcode */
+  }
 
-  for(countpt = sncount, index = 4; index < 12; index += 2)
-    rrcount += (*countpt++ = get16bit(doh, index));
+  (void) rrsmap;
+  (void) thisrrset;
 
-  /* TODO: allocate rrmap with rrcount entries */
+  for(countpt = rrcount, index = 4; index < 12; index += 2)
+    rrtotal += (*countpt++ = get16bit(doh, index));
+
+  /* TODO: allocate rrmap with rrtotal entries */
+
+  rrmap = calloc(rrtotal, sizeof(struct RRmap));
+  if(!rrmap)
+    return DOH_OUT_OF_MEM;
+#ifdef USE_HTTTPS
+  d->rrtab = rrmap;             /* HMM. Maybe not ... TODO */
+#endif
+  thisrr = rrmap;
 
   for(index = 12, sect = 0; sect < 4; sect++) {
-    unsigned int count = sncount[sect];
-    while(count) {
+    unsigned int count = rrcount[sect];
+    while(count) {              /* Deal with each RR */
+      thisrr->base = index;
       rc = skipqname(doh, dohlen, &index);
       if(rc)
         return rc;
-      if(dohlen < index + (sect ? 10 : 4))
+      thisrr->name_len = index - thisrr->base;
+      if(thisrr->name_len == 2) {
+        unsigned short offset = get16bit(doh, thisrr->base);
+        if((offset & 0xc000) == 0xc000)
+          thisrr->name_ref = offset & ~0xc000;
+      }
+      else
+        thisrr->name_ref = thisrr->base;
+
+      thisrr->name_org = thisrr->name_ref; /* TODO: adjust for CNAME */
+
+      if(dohlen < index + 4)    /* allow for TYPE, CLASS */
         return DOH_DNS_OUT_OF_RANGE;
       if(get16bit(doh, index + 2) != 1)
         return DOH_DNS_UNEXPECTED_CLASS; /* unsupported */
       type = get16bit(doh, index);
+
+      thisrr->type = type;
+      thisrr->class = 1;
       index += 4;               /* advance past TYPE, CLASS */
 
       if(sect == 0) {           /* Question section */
         if(count > 1)
           return DOH_DNS_MALFORMAT; /* QDCOUNT may not exceed 1 */
-        if(type != dnstype)
+        if(type != dnstype) /* Should never have QTYPE != desired type */
           return DOH_DNS_UNEXPECTED_TYPE;
-      }
+      } /* Question section */
 
-      else {
-        unsigned int ttl = get32bit(doh, index);
+      else {              /* Answer, Authority, Additional sections */
+        if(dohlen < index + 6)  /* allow for TTL, RDLENGTH */
+          return DOH_DNS_OUT_OF_RANGE;
+        ttl = get32bit(doh, index);
+        thisrr->ttl = ttl;
         rdlength = get16bit(doh, index + 4);
+        thisrr->rd_len = rdlength;
         index += 6;             /* advance past TTL, RDLENGTH */
-        if(dohlen < index + rdlength)
+
+        if(dohlen < index + rdlength) /* allow for RDATA */
           return DOH_DNS_OUT_OF_RANGE;
 
-        if(sect == 1) {      /* Answer section */
+        if(sect == 1 && /* Answer section -- section-specific */
+           !aliased) {  /* unless aliased */
           if((type != DNS_TYPE_CNAME)    /* may be synthesized from DNAME */
              && (type != DNS_TYPE_DNAME) /* if present, accept and ignore */
              && (type != dnstype))
             /* Not the same type as was asked for nor CNAME nor DNAME */
             return DOH_DNS_UNEXPECTED_TYPE;
+          switch(type) {
+          /* case DNS_TYPE_MX: */
+          /* case DNS_TYPE_SVCB: */
+#ifdef USE_HTTPSRR
+          case DNS_TYPE_HTTPS:
+            thisrr->priority = get16bit(doh, index);
+            rc = store_dnsname(doh, dohlen, index + 2, targname, 256);
+            if(rc)
+              return DOH_OUT_OF_MEM;
+            if(!thisrr->priority)
+              aliased = 1;
+            break;
+#endif  /* defined USE_HTTPSRR */
+          default:
+            break;
+          } /* switch(type) */
 
-#ifndef USE_OLD_DOH_DECODE
-          rc = rdata(doh, dohlen, rdlength, type, index, d);
-          if(rc)
-            return rc; /* bad rdata */
-#endif
+          if(!aliased) {       /* If aliased, don't save RDATA */
+            rc = rdata(doh, dohlen, rdlength, type, index, d);
+            if(rc)
+              return rc; /* bad rdata */
+          }
+        } /* Answer section -- section-specific */
 
-          index += rdlength;
-        }
-      }
-      count--;
+        /* Resume common handling */
+        index += rdlength;
+
+      } /* Answer, Authority, Additional sections */
+
+      /* Housekeeping after each RR */
+      count--;                  /* RR done */
+      thisrr++;                 /* ready for next RR */
     }
   }
 
-#ifdef USE_OLD_DOH_DECODE
+  if(index != dohlen)           /* unprocessed content in message buffer? */
+    return DOH_DNS_MALFORMAT;   /* if so, something is wrong */
 
-  index = 12;                   /* initial condition for old code */
+  fprintf(stderr,
+          " %20s base nlen nref norg   TYPE  cl %10s rdln prio\n",
+          "", "TTL");         /* header */
 
-  qdcount = get16bit(doh, 4);
-  while(qdcount) {
-    rc = skipqname(doh, dohlen, &index);
-    if(rc)
-      return rc; /* bad qname */
-    if(dohlen < (index + 4))
-      return DOH_DNS_OUT_OF_RANGE;
-    index += 4; /* skip question's type and class */
-    qdcount--;
+  for(thisrr = rrmap; rrtotal-- > 0; thisrr++) {
+    fprintf(stderr,
+            " %2ld (%p): %4d %4d %4d %4d  %5d %3d %10d %4d %4d\n",
+            thisrr - rrmap, (void *) thisrr,
+            thisrr->base, thisrr->name_len, thisrr->name_ref,
+            thisrr->name_org, thisrr->type,
+            thisrr->class, thisrr->ttl, thisrr->rd_len, thisrr->priority
+            );                  /* per-RR detail */
   }
 
-  ancount = get16bit(doh, 6);
-  while(ancount) {
-    unsigned short class;
-    unsigned int ttl;
+  /* This is causing trouble; it's likely over-zealous
+   * TODO: figure out appropriate test(s)               */
+/* #ifdef USE_HTTTPS */
+/*   if((type != DNS_TYPE_NS) && !d->numcname &&
+     !d->numaddr && !d->numhttps_rrs) */
+/* #else */
+/*   if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr) */
+/* #endif */
+/*     /\* nothing stored! *\/ */
+/*     return DOH_NO_CONTENT; */
 
-    rc = skipqname(doh, dohlen, &index);
-    if(rc)
-      return rc; /* bad qname */
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    type = get16bit(doh, index);
-    if((type != DNS_TYPE_CNAME)    /* may be synthesized from DNAME */
-       && (type != DNS_TYPE_DNAME) /* if present, accept and ignore */
-       && (type != dnstype))
-      /* Not the same type as was asked for nor CNAME nor DNAME */
-      return DOH_DNS_UNEXPECTED_TYPE;
-    index += 2;
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-    class = get16bit(doh, index);
-    if(DNS_CLASS_IN != class)
-      return DOH_DNS_UNEXPECTED_CLASS; /* unsupported */
-    index += 2;
-
-    if(dohlen < (index + 4))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    ttl = get32bit(doh, index);
-    if(ttl < d->ttl)
-      d->ttl = ttl;
-    index += 4;
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    rdlength = get16bit(doh, index);
-    index += 2;
-    if(dohlen < (index + rdlength))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    rc = rdata(doh, dohlen, rdlength, type, index, d);
-    if(rc)
-      return rc; /* bad rdata */
-    index += rdlength;
-    ancount--;
+  if(aliased) {
+    fprintf(stderr, " AliasMode HTTPS RR refers to %s\n", targname);
+    return DOH_DNS_ALIAS_PENDING;
   }
-
-  nscount = get16bit(doh, 8);
-  while(nscount) {
-    rc = skipqname(doh, dohlen, &index);
-    if(rc)
-      return rc; /* bad qname */
-
-    if(dohlen < (index + 8))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    index += 2 + 2 + 4; /* type, class and ttl */
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    rdlength = get16bit(doh, index);
-    index += 2;
-    if(dohlen < (index + rdlength))
-      return DOH_DNS_OUT_OF_RANGE;
-    index += rdlength;
-    nscount--;
-  }
-
-  arcount = get16bit(doh, 10);
-  while(arcount) {
-    rc = skipqname(doh, dohlen, &index);
-    if(rc)
-      return rc; /* bad qname */
-
-    if(dohlen < (index + 8))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    index += 2 + 2 + 4; /* type, class and ttl */
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    rdlength = get16bit(doh, index);
-    index += 2;
-    if(dohlen < (index + rdlength))
-      return DOH_DNS_OUT_OF_RANGE;
-    index += rdlength;
-    arcount--;
-  }
-
-#endif
-
-  if(index != dohlen)
-    return DOH_DNS_MALFORMAT; /* something is wrong */
-
-#ifdef USE_HTTTPS
-  if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr && !d->numhttps_rrs)
-#else
-  if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr)
-#endif
-    /* nothing stored! */
-    return DOH_NO_CONTENT;
-
   return DOH_OK; /* ok */
 }
 
@@ -1083,6 +1206,10 @@ UNITTEST void de_cleanup(struct dohentry *d)
 #ifdef USE_HTTPSRR
   for(i = 0; i < d->numhttps_rrs; i++)
     free(d->https_rrs[i].val);
+  if(d->rrtab)
+    Curl_safefree(d->rrtab);
+  if(d->rrstab)
+    Curl_safefree(d->rrstab);
 #endif
 }
 
@@ -1365,8 +1492,16 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
   if(!dohp)
     return CURLE_OUT_OF_MEMORY;
 
+  infof(data, " Entered Curl_doh_is_resolved()");
+
   if(!dohp->probe[DOH_PROBE_SLOT_IPADDR_V4].easy &&
-     !dohp->probe[DOH_PROBE_SLOT_IPADDR_V6].easy) {
+     !dohp->probe[DOH_PROBE_SLOT_IPADDR_V6].easy
+#ifdef USE_HTTPSRR
+     &&
+     !dohp->probe[DOH_PROBE_SLOT_HTTPS].easy &&
+     !dohp->probe[DOH_PROBE_SLOT_ALIAS].easy
+#endif  /* defined USE_HTTPSRR */
+     ) {
     failf(data, "Could not DoH-resolve: %s", data->state.async.hostname);
     return CONN_IS_PROXIED(data->conn)?CURLE_COULDNT_RESOLVE_PROXY:
       CURLE_COULDNT_RESOLVE_HOST;
@@ -1381,7 +1516,9 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
       DOH_OK, DOH_OK, DOH_OK
     };
 #endif
-    struct dohentry de;
+    /* struct dohentry de; */
+    struct dohentry *dep = &dohp->de;
+    struct dnsprobe *p;
     int slot;
     /* remove DoH handles from multi handle and close them */
     for(slot = 0; slot < DOH_PROBE_SLOTS; slot++) {
@@ -1389,25 +1526,81 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
       Curl_close(&dohp->probe[slot].easy);
     }
     /* parse the responses, create the struct and return it! */
-    de_init(&de);
+    /* de_init(&de); */
     for(slot = 0; slot < DOH_PROBE_SLOTS; slot++) {
-      struct dnsprobe *p = &dohp->probe[slot];
-      if(!p->dnstype)
+      p = &dohp->probe[slot];
+      if(!p->in_work) {
+        infof(data, "DoH request slot %d: skipped because "
+              "inactive or already decoded", slot);
         continue;
+      }
+      infof(data, "DoH request slot %d: decoding response", slot);
       rc[slot] = doh_decode(Curl_dyn_uptr(&p->serverdoh),
                             Curl_dyn_len(&p->serverdoh),
                             p->dnstype,
-                            &de);
-      Curl_dyn_free(&p->serverdoh);
+                            dep);
+
+      p->status = rc[slot];     /* save rc as slot status */
+      p->in_work = 0;           /* mark slot "decoded" */
+
+      Curl_dyn_free(&p->serverdoh); /* Now, or after chasing aliases ? */
+
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
       if(rc[slot]) {
-        infof(data, "DoH: %s type %s for %s", doh_strerror(rc[slot]),
-              type2name(p->dnstype), dohp->host);
+        infof(data, "DoH: %s (%d) type %s for %s", doh_strerror(rc[slot]),
+              rc[slot], type2name(p->dnstype), dohp->host);
       }
 #endif
     } /* next slot */
 
+#ifdef USE_HTTPSRR
+    /* -----------------------------------------------------*
+     * All initially-planned DoH requests have completed    *
+     * but alias-chasing might still be needed for HTTPS RR *
+     * ---------------------------------------------------- */
+
+    slot = DOH_PROBE_SLOT_HTTPS;
+    p = &dohp->probe[slot];
+    if(p->dnstype == DNS_TYPE_HTTPS
+       && rc[slot] == DOH_DNS_ALIAS_PENDING) {
+      /* This slot was used, and is marked as needing follow-up */
+      DNStype qtype = p->dnstype;  /* copy previous QTYPE */
+      unsigned char *qname = "cover.defo.ie";
+
+      /* don't repeat follow-up */
+      p->status = rc[slot] = DOH_OK;
+
+      slot = DOH_PROBE_SLOT_ALIAS; /* slot index for alias-chasing */
+      p = &dohp->probe[slot];      /* the slot */
+      result = dohprobe(data,      /* our easy handle */
+                        p,         /* slot to use */
+                        qtype,     /* QTYPE to use */
+                        qname,     /* TODO: actual target */
+                        data->set.str[STRING_DOH], /* DOH server */
+                        data->multi, /* where our easy handle belongs */
+                        dohp->headers);     /* same headers as before */
+
+      /* TODO: error handling */
+
+      if(!result) {
+        fprintf(stderr, " DoH request %p submitted for slot %d\n",
+                (void *)dohp->probe[slot].easy, slot);
+        dohp->pending++;
+        p->in_work = 1;
+
+        /* Return OK with *dnsp unset signals PENDING to caller */
+        return CURLE_OK;
+      }
+    }
+#endif  /* defined USE_HTTPSRR */
+
     result = CURLE_COULDNT_RESOLVE_HOST; /* until we know better */
+
+    for(slot = 0; slot < DOH_PROBE_SLOTS; slot++) {
+      fprintf(stderr, " DoH request slot %d: rc %d, status %d\n",
+              slot, rc[slot], dohp->probe[slot].status);
+    }
+
     if(!rc[DOH_PROBE_SLOT_IPADDR_V4] || !rc[DOH_PROBE_SLOT_IPADDR_V6]) {
       /* we have an address, of one kind or other */
       struct Curl_dns_entry *dns;
@@ -1416,12 +1609,16 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
 
       if(Curl_trc_ft_is_verbose(data, &Curl_doh_trc)) {
         infof(data, "[DoH] Host name: %s", dohp->host);
-        showdoh(data, &de);
+        showdoh(data, dep);
       }
 
-      result = doh2ai(&de, dohp->host, dohp->port, &ai);
+      /* result = doh2ai(&de, dohp->host, dohp->port, &ai); */
+      result = doh2ai(dep, dohp->host, dohp->port, &ai);
+      fprintf(stderr, " DoH: doh2ai() returned %d (%s)\n",
+              result, curl_easy_strerror(result));
       if(result) {
-        de_cleanup(&de);
+        /* de_cleanup(&de); */
+        de_cleanup(dep);
         return result;
       }
 
@@ -1443,13 +1640,21 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
         *dnsp = dns;
         result = CURLE_OK;      /* address resolution OK */
       }
+
+      infof(data, " DoH address processing done");
     } /* address processing done */
 
     /* Now process any build-specific attributes retrieved from DNS */
 #ifdef USE_HTTPSRR
-    if(de.numhttps_rrs > 0 && result == CURLE_OK && *dnsp) {
+    /* if(de.numhttps_rrs > 0 && result == CURLE_OK && *dnsp) { */
+    /*   struct Curl_https_rrinfo *hrr = NULL; */
+    /*   result = Curl_doh_decode_httpsrr(de.https_rrs->val, */
+    /*                                    de.https_rrs->len, */
+    /*                                    &hrr); */
+    if(dep->numhttps_rrs > 0 && result == CURLE_OK && *dnsp) {
       struct Curl_https_rrinfo *hrr = NULL;
-      result = Curl_doh_decode_httpsrr(de.https_rrs->val, de.https_rrs->len,
+      result = Curl_doh_decode_httpsrr(dep->https_rrs->val,
+                                       dep->https_rrs->len,
                                        &hrr);
       if(result) {
         infof(data, "Failed to decode HTTPS RR");
@@ -1464,7 +1669,8 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
 #endif
 
     /* All done */
-    de_cleanup(&de);
+    /* de_cleanup(&de); */
+    de_cleanup(dep);
     Curl_safefree(data->req.doh);
     return result;
 

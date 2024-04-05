@@ -32,21 +32,26 @@
 
 #ifndef CURL_DISABLE_DOH
 
+#define DOH_MAX_ADDR 24
+#define DOH_MAX_CNAME 4
+#define DOH_MAX_HTTPS 4
+
 typedef enum {
   DOH_OK,
-  DOH_DNS_BAD_LABEL,    /* 1 */
-  DOH_DNS_OUT_OF_RANGE, /* 2 */
-  DOH_DNS_LABEL_LOOP,   /* 3 */
-  DOH_TOO_SMALL_BUFFER, /* 4 */
-  DOH_OUT_OF_MEM,       /* 5 */
-  DOH_DNS_RDATA_LEN,    /* 6 */
-  DOH_DNS_MALFORMAT,    /* 7 */
-  DOH_DNS_BAD_RCODE,    /* 8 - no such name */
-  DOH_DNS_UNEXPECTED_TYPE,  /* 9 */
-  DOH_DNS_UNEXPECTED_CLASS, /* 10 */
-  DOH_NO_CONTENT,           /* 11 */
-  DOH_DNS_BAD_ID,           /* 12 */
-  DOH_DNS_NAME_TOO_LONG     /* 13 */
+  DOH_DNS_BAD_LABEL,         /* 1 */
+  DOH_DNS_OUT_OF_RANGE,      /* 2 */
+  DOH_DNS_LABEL_LOOP,        /* 3 */
+  DOH_TOO_SMALL_BUFFER,      /* 4 */
+  DOH_OUT_OF_MEM,            /* 5 */
+  DOH_DNS_RDATA_LEN,         /* 6 */
+  DOH_DNS_MALFORMAT,         /* 7 */
+  DOH_DNS_BAD_RCODE,         /* 8 - beware NXDOMAIN (no such name) */
+  DOH_DNS_UNEXPECTED_TYPE,   /* 9 */
+  DOH_DNS_UNEXPECTED_CLASS,  /* 10 */
+  DOH_NO_CONTENT,            /* 11 */
+  DOH_DNS_BAD_ID,            /* 12 */
+  DOH_DNS_NAME_TOO_LONG,     /* 13 */
+  DOH_DNS_ALIAS_PENDING      /* 14 */
 } DOHcode;
 
 typedef enum {
@@ -58,18 +63,79 @@ typedef enum {
   DNS_TYPE_HTTPS = 65
 } DNStype;
 
+struct dohaddr {
+  int type;
+  union {
+    unsigned char v4[4]; /* network byte order */
+    unsigned char v6[16];
+  } ip;
+};
+
 /* one of these for each DoH request */
 struct dnsprobe {
-  CURL *easy;
-  DNStype dnstype;
-  unsigned char dohbuffer[512];
-  size_t dohlen;
-  struct dynbuf serverdoh;
+  CURL *easy;                   /* "worker" easy handle for this request */
+  /* Note: handle we're working for will be referenced by easy->set.dohfor */
+  DNStype dnstype;              /* QTYPE for this request */
+  unsigned char dohbuffer[512]; /* query message */
+  size_t dohlen;                /* query length */
+  struct dynbuf serverdoh;      /* response message */
+  /* Proposed extensions */
+  DOHcode status;               /* Result from doh_decode (not a CURLcode!) */
+  unsigned int rcode;           /* DNS RCODE (possibly extended) */
+  unsigned char qname[256];     /* DNS QNAME, if prefixed or aliased */
+  unsigned char canonname[256]; /* target of CNAME or AliasMode */
+  unsigned int in_work;         /* active, not yet decoded */
+};
+
+struct RRmap {       /* Note: all offsets are from start of message */
+  unsigned int base;     /* offset to RR */
+  unsigned int name_len; /* length of name (perhaps a pointer) */
+  unsigned int name_ref; /* offset to referenced name */
+  unsigned int name_org; /* offset to "original" name */
+  unsigned int type;
+  unsigned int class;
+  unsigned int ttl;
+  unsigned int rd_len;   /* length of rdata */
+  unsigned int rd_ref;   /* offset to rdata */
+  unsigned int priority; /* priority/preference (if defined) */
+};
+
+struct RRsetmap {
+  unsigned int base;     /* index into RRmap of first RR */
+  unsigned int count;    /* count of RRs in RRset */
+  unsigned int ttl;      /* minimum TTL over RRs in set */
+  unsigned int type;     /* RR TYPE (common to all RRs in set) */
+  unsigned int name_ref; /* offset to referenced name */
+  unsigned int name_org; /* offset to "original" name */
+};
+
+struct dohhttps_rr {
+  uint16_t len; /* raw encoded length */
+  unsigned char *val; /* raw encoded octets */
+};
+#endif
+
+struct dohentry {
+  struct dynbuf cname[DOH_MAX_CNAME];
+  struct dohaddr addr[DOH_MAX_ADDR];
+  struct dynbuf targname;
+  int numaddr;
+  unsigned int ttl;
+  int numcname;
+#ifdef USE_HTTPSRR
+  struct dohhttps_rr https_rrs[DOH_MAX_HTTPS];
+  int numhttps_rrs;
+  /* TODO: decide where to put following 2 declarations              */
+  /*       advantage of here is that de_cleanup() can deal with them */
+  struct RRmap *rrtab;
+  struct RRsetmap *rrstab;
+#endif
 };
 
 struct dohdata {
   struct curl_slist *headers;
   struct dnsprobe probe[DOH_PROBE_SLOTS];
+  struct dohentry de;           /* Preserve state between passes */
   unsigned int pending; /* still outstanding requests */
   int port;
   const char *host;
@@ -89,18 +155,6 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
                               struct Curl_dns_entry **dns);
 
 int Curl_doh_getsock(struct connectdata *conn, curl_socket_t *socks);
-
-#define DOH_MAX_ADDR 24
-#define DOH_MAX_CNAME 4
-#define DOH_MAX_HTTPS 4
-
-struct dohaddr {
-  int type;
-  union {
-    unsigned char v4[4]; /* network byte order */
-    unsigned char v6[16];
-  } ip;
-};
 
 #ifdef USE_HTTPSRR
 
@@ -123,25 +177,6 @@ struct dohaddr {
  */
 #define COMMA_CHAR                    ','
 #define BACKSLASH_CHAR                '\\'
-
-struct dohhttps_rr {
-  uint16_t len; /* raw encoded length */
-  unsigned char *val; /* raw encoded octets */
-};
-#endif
-
-struct dohentry {
-  struct dynbuf cname[DOH_MAX_CNAME];
-  struct dohaddr addr[DOH_MAX_ADDR];
-  int numaddr;
-  unsigned int ttl;
-  int numcname;
-#ifdef USE_HTTPSRR
-  struct dohhttps_rr https_rrs[DOH_MAX_HTTPS];
-  int numhttps_rrs;
-#endif
-};
-
 
 #ifdef DEBUGBUILD
 DOHcode doh_encode(const char *host,
