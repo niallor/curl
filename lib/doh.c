@@ -124,8 +124,8 @@ UNITTEST DOHcode doh_encode(const char *host,
   if(expected_len > (256 + 16)) /* RFCs 1034, 1035 */
     return DOH_DNS_NAME_TOO_LONG;
 
-  if(len < expected_len)
-    return DOH_TOO_SMALL_BUFFER;
+  if(len < (expected_len + DOH_MIN_OPTRR_LEN))
+    return DOH_TOO_SMALL_BUFFER; /* Allow for minimal OPT pseudo-section */
 
   *dnsp++ = 0; /* 16 bit id */
   *dnsp++ = 0;
@@ -138,7 +138,7 @@ UNITTEST DOHcode doh_encode(const char *host,
   *dnsp++ = '\0';
   *dnsp++ = '\0'; /* NSCOUNT */
   *dnsp++ = '\0';
-  *dnsp++ = '\0'; /* ARCOUNT */
+  *dnsp++ = 1;    /* ARCOUNT (for OPT pseudo-section) */
 
   /* encode each label and store it in the QNAME */
   while(*hostp) {
@@ -177,6 +177,21 @@ UNITTEST DOHcode doh_encode(const char *host,
   /* verify that our estimation of length is valid, since
    * this has led to buffer overflows in this function */
   DEBUGASSERT(*olen == expected_len);
+
+  /* Append minimal OPT pseudo-section (without client cookie) */
+  *dnsp++ = '\0';               /* (1) ROOT label */
+  *dnsp++ = '\0';
+  *dnsp++ = 41;                 /* (2) TYPE OPT */
+  *dnsp++ = 0x04;
+  *dnsp++ = 0xd0;               /* (2) UDP length 1232 (0x04d0) */
+  *dnsp++ = '\0';
+  *dnsp++ = '\0';
+  *dnsp++ = '\0';
+  *dnsp++ = '\0';               /* (4) Flags - none set */
+  *dnsp++ = '\0';
+  *dnsp++ = '\0';               /* (2) RDLEN - 0 */
+  *olen += 11;                  /* Count length of OPT pseudo-section */
+
   return DOH_OK;
 }
 
@@ -917,9 +932,9 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
 
       if(dohlen < index + 4)    /* allow for TYPE, CLASS */
         return DOH_DNS_OUT_OF_RANGE;
-      if(get16bit(doh, index + 2) != 1)
-        return DOH_DNS_UNEXPECTED_CLASS; /* unsupported */
       type = get16bit(doh, index);
+      if(type != 41 && get16bit(doh, index + 2) != 1)
+        return DOH_DNS_UNEXPECTED_CLASS; /* unsupported */
 
       thisrr->type = type;
       thisrr->class = 1;
@@ -974,6 +989,11 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
               return rc; /* bad rdata */
           }
         } /* Answer section -- section-specific */
+
+        if(sect == 3) {
+          /* TODO: decode OPT pseudo-section */
+          /* TODO: use rfc9460 section 4.2 alias chasing, if any */
+        }
 
         /* Resume common handling */
         index += rdlength;

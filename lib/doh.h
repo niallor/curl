@@ -35,6 +35,8 @@
 #define DOH_MAX_ADDR 24
 #define DOH_MAX_CNAME 4
 #define DOH_MAX_HTTPS 4
+#define DOH_MIN_OPTRR_LEN 11    /* without client cookie */
+#define DOH_CLIENT_OPTRR_LEN 23 /* with client cookie (future) */
 
 typedef enum {
   DOH_OK,
@@ -60,6 +62,7 @@ typedef enum {
   DNS_TYPE_CNAME = 5,
   DNS_TYPE_AAAA = 28,
   DNS_TYPE_DNAME = 39,           /* RFC6672 */
+  DNS_TYPE_OPT = 41,             /* RFC6891 */
   DNS_TYPE_HTTPS = 65
 } DNStype;
 
