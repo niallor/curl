@@ -74,22 +74,6 @@ struct dohaddr {
   } ip;
 };
 
-/* one of these for each DoH request */
-struct dnsprobe {
-  CURL *easy;                   /* "worker" easy handle for this request */
-  /* Note: handle we're working for will be referenced by easy->set.dohfor */
-  DNStype dnstype;              /* QTYPE for this request */
-  unsigned char dohbuffer[512]; /* query message */
-  size_t dohlen;                /* query length */
-  struct dynbuf serverdoh;      /* response message */
-  /* Proposed extensions */
-  DOHcode status;               /* Result from doh_decode (not a CURLcode!) */
-  unsigned int rcode;           /* DNS RCODE (possibly extended) */
-  unsigned char qname[256];     /* DNS QNAME, if prefixed or aliased */
-  unsigned char canonname[256]; /* target of CNAME or AliasMode */
-  unsigned int in_work;         /* active, not yet decoded */
-};
-
 struct RRmap {       /* Note: all offsets are from start of message */
   unsigned int base;     /* offset to RR */
   unsigned int name_len; /* length of name (perhaps a pointer) */
@@ -112,6 +96,24 @@ struct RRsetmap {
   unsigned int name_org; /* offset to "original" name */
 };
 
+/* one of these for each DoH request */
+struct dnsprobe {
+  CURL *easy;                   /* "worker" easy handle for this request */
+  /* Note: handle we're working for will be referenced by easy->set.dohfor */
+  DNStype dnstype;              /* QTYPE for this request */
+  unsigned char dohbuffer[512]; /* query message */
+  size_t dohlen;                /* query length */
+  struct dynbuf serverdoh;      /* response message */
+  /* Proposed extensions */
+  DOHcode status;               /* Result from doh_decode (not a CURLcode!) */
+  unsigned int rcode;           /* DNS RCODE (possibly extended) */
+  unsigned char qname[256];     /* DNS QNAME, if prefixed or aliased */
+  unsigned char canonname[256]; /* target of CNAME or AliasMode */
+  unsigned int in_work;         /* active, not yet decoded */
+  struct RRmap *rrtab;          /* table of RRs in response */
+  struct RRsetmap *settab;      /* table of RRsets in response */
+};
+
 struct dohhttps_rr {
   uint16_t len; /* raw encoded length */
   unsigned char *val; /* raw encoded octets */
@@ -132,6 +134,7 @@ struct dohentry {
   /*       advantage of here is that de_cleanup() can deal with them */
   struct RRmap *rrtab;
   struct RRsetmap *rrstab;
+  struct dnsprobe *probe;
 #endif
 };
 
@@ -139,7 +142,7 @@ struct dohdata {
   struct curl_slist *headers;
   struct dnsprobe probe[DOH_PROBE_SLOTS];
   struct dohentry de;           /* Preserve state between passes */
-  unsigned int pending; /* still outstanding requests */
+  unsigned int pending;         /* still outstanding requests */
   int port;
   const char *host;
 };
