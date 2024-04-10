@@ -1566,15 +1566,28 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
                         data->multi, /* where our easy handle belongs */
                         dohp->headers);     /* same headers as before */
 
-      /* TODO: (ASAP) error handling */
-
-      if(!result) {
-        dohp->pending++;
-        p->in_work = 1;
-
-        /* Return OK with *dnsp unset signals PENDING to caller */
-        return CURLE_OK;
+      if(result) {
+        /* NOTE: code block copied from Curl_addrinfo() */
+        /* TODO: consider using function (or macro?) instead */
+        curl_slist_free_all(dohp->headers);
+        data->req.doh->headers = NULL;
+        for(slot = 0; slot < DOH_PROBE_SLOTS; slot++) {
+          (void)curl_multi_remove_handle(data->multi, dohp->probe[slot].easy);
+          Curl_close(&dohp->probe[slot].easy);
+          if(dohp->probe[slot].rrtab)
+            Curl_safefree(dohp->probe[slot].rrtab);
+          if(dohp->probe[slot].settab)
+            Curl_safefree(dohp->probe[slot].settab);
+        }
+        Curl_safefree(data->req.doh);
+        return result;
       }
+
+      dohp->pending++;
+      p->in_work = 1;
+
+      /* Return OK with *dnsp unset signals PENDING to caller */
+      return CURLE_OK;
     }
 
     /* DoH completed, including alias-chasing */
