@@ -46,7 +46,8 @@ typedef enum {
   DOH_DNS_UNEXPECTED_CLASS, /* 10 */
   DOH_NO_CONTENT,           /* 11 */
   DOH_DNS_BAD_ID,           /* 12 */
-  DOH_DNS_NAME_TOO_LONG     /* 13 */
+  DOH_DNS_NAME_TOO_LONG,    /* 13 */
+  DOH_DNS_ALIAS_PENDING     /* 14 */
 } DOHcode;
 
 typedef enum {
@@ -58,21 +59,46 @@ typedef enum {
   DNS_TYPE_HTTPS = 65
 } DNStype;
 
+
+/* struct:s RRmap, RRsetmap describe inter-RR dependencies */
+struct RRmap {       /* Note: all offsets are from start of message */
+  unsigned int base;     /* offset to RR */
+  unsigned int name_len; /* length of name (perhaps a pointer) */
+  unsigned int name_ref; /* offset to referenced name */
+  unsigned int name_org; /* offset to "original" name */
+  unsigned int type;
+  unsigned int class;
+  unsigned int ttl;
+  unsigned int rd_len;   /* length of rdata */
+  unsigned int rd_ref;   /* offset to rdata */
+  unsigned int priority; /* priority/preference (if defined) */
+};
+
+struct RRsetmap {
+  unsigned int base;     /* index into RRmap of first RR */
+  unsigned int count;    /* count of RRs in RRset */
+  unsigned int ttl;      /* minimum TTL over RRs in set */
+  unsigned int type;     /* RR TYPE (common to all RRs in set) */
+  unsigned int name_ref; /* offset to referenced name */
+  unsigned int name_org; /* offset to "original" name */
+};
+
 /* one of these for each DoH request */
 struct dnsprobe {
   CURL *easy;
+  /* Note: handle we're working for will be referenced by easy->set.dohfor */
   DNStype dnstype;
   unsigned char dohbuffer[512];
   size_t dohlen;
   struct dynbuf serverdoh;
-};
-
-struct dohdata {
-  struct curl_slist *headers;
-  struct dnsprobe probe[DOH_PROBE_SLOTS];
-  unsigned int pending; /* still outstanding requests */
-  int port;
-  const char *host;
+  /* Proposed extensions */
+  DOHcode status;               /* Result from doh_decode (not a CURLcode!) */
+  unsigned int rcode;           /* DNS RCODE (possibly extended) */
+  unsigned char qname[256];     /* DNS QNAME, if prefixed or aliased */
+  unsigned char canonname[256]; /* target of CNAME or AliasMode */
+  unsigned int in_work;         /* active, not yet decoded */
+  struct RRmap *rrtab;          /* table of RRs in response */
+  struct RRsetmap *settab;      /* table of RRsets in response */
 };
 
 /*
@@ -131,15 +157,29 @@ struct dohhttps_rr {
 struct dohentry {
   struct dynbuf cname[DOH_MAX_CNAME];
   struct dohaddr addr[DOH_MAX_ADDR];
+  struct dynbuf targname;
   int numaddr;
   unsigned int ttl;
   int numcname;
 #ifdef USE_HTTPSRR
   struct dohhttps_rr https_rrs[DOH_MAX_HTTPS];
   int numhttps_rrs;
+  struct RRmap *rrtab;
+  struct RRsetmap *rrstab;
+  struct dnsprobe *probe;
 #endif
 };
 
+struct dohdata {
+  struct curl_slist *headers;
+  struct dnsprobe probe[DOH_PROBE_SLOTS];
+  struct dohentry de;           /* Preserve state between passes */
+  unsigned int pending;         /* still outstanding requests */
+  unsigned int inusect;         /* slots in use == index of next free slot */
+  struct dnsprobe *follow;      /* probe with alias pending */
+  int port;
+  const char *host;
+};
 
 #ifdef DEBUGBUILD
 DOHcode doh_encode(const char *host,
