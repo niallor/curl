@@ -164,9 +164,9 @@ struct dohentry {
 #ifdef USE_HTTPSRR
   struct dohhttps_rr https_rrs[DOH_MAX_HTTPS];
   int numhttps_rrs;
-  struct RRmap *rrtab;
-  struct RRsetmap *rrstab;
-  struct dnsprobe *probe;
+  struct RRmap *rrtab;          /* allocated map of RRs in response */
+  struct RRsetmap *rrstab;      /* allocated map of RRsets in response */
+  struct dnsprobe *probe;       /* reference to current probe object */
 #endif
 };
 
@@ -176,7 +176,7 @@ struct dohdata {
   struct dohentry de;           /* Preserve state between passes */
   unsigned int pending;         /* still outstanding requests */
   unsigned int inusect;         /* slots in use == index of next free slot */
-  struct dnsprobe *follow;      /* probe with alias pending */
+  struct dnsprobe *follow;      /* reference to probe with alias pending */
   int port;
   const char *host;
 };
