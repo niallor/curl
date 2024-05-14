@@ -38,6 +38,7 @@
 #include "connect.h"
 #include "strdup.h"
 #include "dynbuf.h"
+#include "inet_ntop.h"
 /* The last 3 #include files should be in this order */
 #include "curl_printf.h"
 #include "curl_memory.h"
@@ -406,12 +407,6 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
   unsigned int slot;
   struct dohdata *dohp;
   struct connectdata *conn = data->conn;
-#ifdef USE_HTTPSRR
-  /* for now, this is only used when ECH is enabled */
-# ifdef USE_ECH
-  char *qname = NULL;
-# endif
-#endif
   *waitp = FALSE;
   (void)hostname;
   (void)port;
@@ -483,6 +478,7 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
 # ifdef USE_ECH
   if(data->set.tls_ech & CURLECH_ENABLE
      || data->set.tls_ech & CURLECH_HARD) {
+    char *qname = NULL;
     if(port == 443)
       qname = strdup(hostname);
     else
@@ -493,7 +489,7 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
     result = dohprobe(data, &dohp->probe[DOH_PROBE_SLOT_HTTPS],
                       DNS_TYPE_HTTPS, qname, data->set.str[STRING_DOH],
                       data->multi, dohp->headers);
-    free(qname);
+    Curl_safefree(qname);
     if(result)
       goto error;
     dohp->probe[dohp->inusect].in_work = 1;
@@ -1015,7 +1011,7 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
   if(aliased)
     return DOH_DNS_ALIAS_PENDING;
 
-#ifdef USE_HTTTPS
+#ifdef USE_HTTPSRR
   if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr && !d->numhttps_rrs)
 #else
   if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr)
@@ -1089,7 +1085,10 @@ static void showdoh(struct Curl_easy *data,
  * must be an associated call later to Curl_freeaddrinfo().
  */
 
-static CURLcode doh2ai(const struct dohentry *de, const char *hostname,
+static CURLcode doh2ai(
+                       /* const */
+                       struct dohentry *de,
+                       const char *hostname,
                        int port, struct Curl_addrinfo **aip)
 {
   struct Curl_addrinfo *ai;
@@ -1105,89 +1104,277 @@ static CURLcode doh2ai(const struct dohentry *de, const char *hostname,
 
   DEBUGASSERT(de);
 
-  if(!de->numaddr)
-    return CURLE_COULDNT_RESOLVE_HOST;
-
-  for(i = 0; i < de->numaddr; i++) {
-    size_t ss_size;
-    CURL_SA_FAMILY_T addrtype;
-    if(de->addr[i].type == DNS_TYPE_AAAA) {
+  if(de->numaddr) {
+    for(i = 0; i < de->numaddr; i++) {
+      size_t ss_size;
+      CURL_SA_FAMILY_T addrtype;
+      if(de->addr[i].type == DNS_TYPE_AAAA) {
 #ifndef USE_IPV6
-      /* we can't handle IPv6 addresses */
-      continue;
+        /* we can't handle IPv6 addresses */
+        continue;
 #else
-      ss_size = sizeof(struct sockaddr_in6);
-      addrtype = AF_INET6;
+        ss_size = sizeof(struct sockaddr_in6);
+        addrtype = AF_INET6;
 #endif
-    }
-    else {
-      ss_size = sizeof(struct sockaddr_in);
-      addrtype = AF_INET;
-    }
+      }
+      else {
+        ss_size = sizeof(struct sockaddr_in);
+        addrtype = AF_INET;
+      }
 
-    ai = calloc(1, sizeof(struct Curl_addrinfo) + ss_size + hostlen);
-    if(!ai) {
-      result = CURLE_OUT_OF_MEMORY;
-      break;
-    }
-    ai->ai_addr = (void *)((char *)ai + sizeof(struct Curl_addrinfo));
-    ai->ai_canonname = (void *)((char *)ai->ai_addr + ss_size);
-    memcpy(ai->ai_canonname, hostname, hostlen);
+      ai = calloc(1, sizeof(struct Curl_addrinfo) + ss_size + hostlen);
+      if(!ai) {
+        result = CURLE_OUT_OF_MEMORY;
+        break;
+      }
+      ai->ai_addr = (void *)((char *)ai + sizeof(struct Curl_addrinfo));
+      ai->ai_canonname = (void *)((char *)ai->ai_addr + ss_size);
+      memcpy(ai->ai_canonname, hostname, hostlen);
 
-    if(!firstai)
-      /* store the pointer we want to return from this function */
-      firstai = ai;
+      if(!firstai)
+        /* store the pointer we want to return from this function */
+        firstai = ai;
 
-    if(prevai)
-      /* make the previous entry point to this */
-      prevai->ai_next = ai;
+      if(prevai)
+        /* make the previous entry point to this */
+        prevai->ai_next = ai;
 
-    ai->ai_family = addrtype;
+      ai->ai_family = addrtype;
 
-    /* we return all names as STREAM, so when using this address for TFTP
-       the type must be ignored and conn->socktype be used instead! */
-    ai->ai_socktype = SOCK_STREAM;
+      /* we return all names as STREAM, so when using this address for TFTP
+         the type must be ignored and conn->socktype be used instead! */
+      ai->ai_socktype = SOCK_STREAM;
 
-    ai->ai_addrlen = (curl_socklen_t)ss_size;
+      ai->ai_addrlen = (curl_socklen_t)ss_size;
 
-    /* leave the rest of the struct filled with zero */
+      /* leave the rest of the struct filled with zero */
 
-    switch(ai->ai_family) {
-    case AF_INET:
-      addr = (void *)ai->ai_addr; /* storage area for this info */
-      DEBUGASSERT(sizeof(struct in_addr) == sizeof(de->addr[i].ip.v4));
-      memcpy(&addr->sin_addr, &de->addr[i].ip.v4, sizeof(struct in_addr));
+      switch(ai->ai_family) {
+      case AF_INET:
+        addr = (void *)ai->ai_addr; /* storage area for this info */
+        DEBUGASSERT(sizeof(struct in_addr) == sizeof(de->addr[i].ip.v4));
+        memcpy(&addr->sin_addr, &de->addr[i].ip.v4, sizeof(struct in_addr));
 #ifdef __MINGW32__
-      addr->sin_family = (short)addrtype;
+        addr->sin_family = (short)addrtype;
 #else
-      addr->sin_family = addrtype;
+        addr->sin_family = addrtype;
 #endif
-      addr->sin_port = htons((unsigned short)port);
-      break;
+        addr->sin_port = htons((unsigned short)port);
+        break;
 
 #ifdef USE_IPV6
-    case AF_INET6:
-      addr6 = (void *)ai->ai_addr; /* storage area for this info */
-      DEBUGASSERT(sizeof(struct in6_addr) == sizeof(de->addr[i].ip.v6));
-      memcpy(&addr6->sin6_addr, &de->addr[i].ip.v6, sizeof(struct in6_addr));
+      case AF_INET6:
+        addr6 = (void *)ai->ai_addr; /* storage area for this info */
+        DEBUGASSERT(sizeof(struct in6_addr) == sizeof(de->addr[i].ip.v6));
+        memcpy(&addr6->sin6_addr, &de->addr[i].ip.v6, sizeof(struct in6_addr));
 #ifdef __MINGW32__
-      addr6->sin6_family = (short)addrtype;
+        addr6->sin6_family = (short)addrtype;
 #else
-      addr6->sin6_family = addrtype;
+        addr6->sin6_family = addrtype;
 #endif
-      addr6->sin6_port = htons((unsigned short)port);
-      break;
+        addr6->sin6_port = htons((unsigned short)port);
+        break;
 #endif
-    }
+      }
 
-    prevai = ai;
+      prevai = ai;
+    }
   }
+#ifdef USE_HTTPSRR
+  else if(de->numhttps_rrs) {
+    /* [TODO] Use address hints, if any, from HTTPS RDATA items */
+
+    /* The plan:
+     * - scan each RDATA item, stepping through SvcParams
+     * - for SvcParamType 4 or 6:
+     *   * skip any SvcParam of Type 4 which follows one of Type 6
+     *   * allocate a fresh struct Curl_addrinfo
+     *   * on failure, set result = CURLE_OUT_OF_MEMORY and break scan
+     *   * set the pointer we want to return, if not yet set
+     *   * save address from SvcParam to Curl_addrinfo
+     */
+    for(i = 0; i < de->numhttps_rrs; i++) { /* each HTTPS RR */
+      size_t ss_size;
+      CURL_SA_FAMILY_T addrtype;
+      int rdpos;
+      struct dohhttps_rr *rdata = &de->https_rrs[i];
+      enum {
+        RD_SCAN_INIT,
+        RD_SCAN_TARGET,
+        RD_SCAN_PARAM } phase;
+
+      for(rdpos = 0, phase = RD_SCAN_INIT; rdpos < rdata->len;) {
+        uint16_t pkey, plen;
+        switch(phase) {
+        case RD_SCAN_INIT:
+          rdpos += 2;
+          phase = RD_SCAN_TARGET;
+          break;
+        case RD_SCAN_TARGET:
+          if(!rdata->val[rdpos])
+            phase = RD_SCAN_PARAM;
+          rdpos += (rdata->val[rdpos] + 1);
+          break;
+        case RD_SCAN_PARAM:
+          if(rdata->len < rdpos + 4)
+            rdpos = rdata->len; /* abandon */
+          else {
+            pkey = get16bit(rdata->val, rdpos);
+            plen = get16bit(rdata->val, rdpos + 2);
+            rdpos += 4;
+            if(rdpos + plen <= rdata->len) {
+              unsigned char *src = rdata->val + rdpos;
+              char abuf[INET6_ADDRSTRLEN];
+              unsigned int offset;
+#ifdef USE_IPV6
+              if(pkey == 6) {
+                for(offset = 0; offset < plen; offset += 16) {
+                  Curl_inet_ntop(AF_INET6, src + offset,
+                                 abuf, INET6_ADDRSTRLEN);
+                  fprintf(stderr,
+                          "DEBUG: ipv6 address at %p: (%ld) %s\n",
+                          src + offset, strlen(abuf), abuf);
+                  ss_size = sizeof(struct sockaddr_in6);
+                  addrtype = AF_INET6;
+                  ai = calloc(1, sizeof(struct Curl_addrinfo)
+                              + ss_size + hostlen);
+                  if(!ai) {
+                    result = CURLE_OUT_OF_MEMORY;
+                    break;
+                  }
+                  ai->ai_addr = (void *)((char *)ai
+                                         + sizeof(struct Curl_addrinfo));
+                  ai->ai_canonname = (void *)((char *)ai->ai_addr + ss_size);
+                  memcpy(ai->ai_canonname, hostname, hostlen);
+
+                  /* TODO: set ai_canonname correctly from alias/CNAME chain */
+
+                  if(!firstai)
+                    /* store the pointer to return from this function */
+                    firstai = ai;
+
+                  if(prevai)
+                    /* make the previous entry point to this */
+                    prevai->ai_next = ai;
+
+                  ai->ai_family = addrtype;
+
+                  /* we return all names as STREAM, so when using this
+                     address for TFTP the type must be ignored and
+                     conn->socktype be used instead! */
+                  ai->ai_socktype = SOCK_STREAM;
+
+                  ai->ai_addrlen = (curl_socklen_t)ss_size;
+                  addr6 = (void *)ai->ai_addr; /* storage area for this info */
+                  /* DEBUGASSERT(sizeof(struct in6_addr) */
+                  /*             == sizeof(de->addr[i].ip.v6)); */
+                  memcpy(&addr6->sin6_addr,
+                         src + offset,
+                         sizeof(struct in6_addr));
+                  addr6->sin6_family = addrtype;
+                  addr6->sin6_port = htons((unsigned short)port);
+
+                  prevai = ai;
+                }
+              }
+              else
+#endif
+                if(pkey == 4) {
+                  for(offset = 0; offset < plen; offset += 4) {
+                    ss_size = sizeof(struct sockaddr_in);
+                    addrtype = AF_INET;
+                    ai = calloc(1, sizeof(struct Curl_addrinfo)
+                                + ss_size + hostlen);
+                    if(!ai) {
+                      result = CURLE_OUT_OF_MEMORY;
+                      break;
+                    }
+                    ai->ai_addr = (void *)((char *)ai
+                                           + sizeof(struct Curl_addrinfo));
+                    ai->ai_canonname = (void *)((char *)ai->ai_addr + ss_size);
+                    memcpy(ai->ai_canonname, hostname, hostlen);
+
+                    if(!firstai)
+                      /* store the pointer to return from this function */
+                      firstai = ai;
+
+                    if(prevai)
+                      /* make the previous entry point to this */
+                      prevai->ai_next = ai;
+
+                    ai->ai_family = addrtype;
+
+                    /* we return all names as STREAM, so when using
+                       this address for TFTP the type must be ignored
+                       and conn->socktype be used instead! */
+                    ai->ai_socktype = SOCK_STREAM;
+
+                    ai->ai_addrlen = (curl_socklen_t)ss_size;
+                    addr = (void *)ai->ai_addr; /* storage for this info */
+                    /* DEBUGASSERT(sizeof(struct in_addr) */
+                    /*             == sizeof(de->addr[i].ip.v4)); */
+                    memcpy(&addr->sin_addr,
+                           src + offset,
+                           sizeof(struct in_addr));
+                    addr->sin_family = addrtype;
+                    addr->sin_port = htons((unsigned short)port);
+                    prevai = ai;
+                  }
+                }
+
+              rdpos += plen;    /* advance past SvcParam value */
+            }
+          }
+        }
+      }
+
+#ifdef READY_FOR_TESTING
+      for(a = 0; a < rrinfo->ipv4hints_len; a += 4) {
+        /* process an IPv4 address */
+        ss_size = sizeof(struct sockaddr_in);
+        addrtype = AF_INET;
+        ai = calloc(1, sizeof(struct Curl_addrinfo) + ss_size + hostlen);
+        if(!ai) {
+          result = CURLE_OUT_OF_MEMORY;
+          break;
+        }
+        ai->ai_addr = (void *)((char *)ai + sizeof(struct Curl_addrinfo));
+        ai->ai_canonname = (void *)((char *)ai->ai_addr + ss_size);
+        memcpy(ai->ai_canonname, hostname, hostlen);
+
+        if(!firstai)
+          /* store the pointer we want to return from this function */
+          firstai = ai;
+
+        if(prevai)
+          /* make the previous entry point to this */
+          prevai->ai_next = ai;
+
+        ai->ai_family = addrtype;
+
+        /* we return all names as STREAM, so when using this address for TFTP
+           the type must be ignored and conn->socktype be used instead! */
+        ai->ai_socktype = SOCK_STREAM;
+
+        ai->ai_addrlen = (curl_socklen_t)ss_size;
+        addr6 = (void *)ai->ai_addr; /* storage area for this info */
+        DEBUGASSERT(sizeof(struct in6_addr) == sizeof(de->addr[i].ip.v6));
+        memcpy(&addr6->sin6_addr, &de->addr[i].ip.v6, sizeof(struct in6_addr));
+        addr6->sin6_family = addrtype;
+        addr6->sin6_port = htons((unsigned short)port);
+      }
+#endif
+    }                                       /* next HTTPS RR */
+  }
+#endif
+  else
+    return CURLE_COULDNT_RESOLVE_HOST;
 
   if(result) {
     Curl_freeaddrinfo(firstai);
     firstai = NULL;
   }
-  *aip = firstai;
+  *aip = firstai; /* might still be NULL, absent any (suitable) address */
 
   return result;
 }
@@ -1217,8 +1404,11 @@ UNITTEST void de_cleanup(struct dohentry *d)
     Curl_dyn_free(&d->cname[i]);
   }
 #ifdef USE_HTTPSRR
+  /* TODO: clean up map tables too */
   for(i = 0; i < d->numhttps_rrs; i++)
-    free(d->https_rrs[i].val);
+    free(d->https_rrs[i].val);  /* TODO: confirm flavour of free() */
+  Curl_safefree(d->rrtab);
+  Curl_safefree(d->rrstab);
 #endif
 }
 
@@ -1434,10 +1624,10 @@ static CURLcode Curl_doh_decode_httpsrr(unsigned char *rrval, size_t len,
   return CURLE_OK;
 err:
   if(lhrr) {
-    free(lhrr->target);
-    free(lhrr->echconfiglist);
-    free(lhrr->val);
-    free(lhrr);
+    Curl_safefree(lhrr->target);
+    Curl_safefree(lhrr->echconfiglist);
+    Curl_safefree(lhrr->val);
+    Curl_safefree(lhrr);
   }
   return CURLE_OUT_OF_MEMORY;
 }
@@ -1484,7 +1674,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
                               struct Curl_dns_entry **dnsp)
 {
   CURLcode result;
-  int slot;
+  unsigned int slot;
   struct dohdata *dohp = data->req.doh;
   *dnsp = NULL; /* defaults to no response */
   if(!dohp)
@@ -1522,11 +1712,9 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
       /* if(!p->dnstype) */
       rc[slot] = DOH_OK;        /* until we know otherwise */
       p = &dohp->probe[slot];
-      if(!p->in_work) {
-        infof(data, "DoH request slot %d: skipped because "
-              "inactive or already decoded", slot);
-        continue;
-      }
+      if(!p->in_work)
+        continue;               /* inactive or already decoded */
+
       dep->probe = p;           /* link current probe to dohentry */
       infof(data, "DoH request slot %d: decoding response", slot);
       rc[slot] = doh_decode(Curl_dyn_uptr(&p->serverdoh),
@@ -1534,6 +1722,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
                             p->dnstype,
       /*                       &de); */
       /* Curl_dyn_free(&p->serverdoh); */
+                            /* TODO: free as appropriate !!! */
                             dep);
       p->status = rc[slot];     /* save rc as slot status */
       p->in_work = 0;           /* mark slot "decoded" */
@@ -1542,8 +1731,6 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
 
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
       if(rc[slot]) {
-        /* infof(data, "DoH: %s type %s for %s", doh_strerror(rc[slot]), */
-        /*       type2name(p->dnstype), dohp->host); */
         infof(data, "DoH: %s (%d) type %s for %s",
               doh_strerror(p->status), p->status,
               type2name(p->dnstype), dohp->host);
@@ -1615,7 +1802,9 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
       /* we have an address, of one kind or other */
       struct Curl_dns_entry *dns;
       struct Curl_addrinfo *ai;
-
+#ifdef USE_HTTPSRR
+      struct Curl_https_rrinfo *hrr = NULL;
+#endif
 
       if(Curl_trc_ft_is_verbose(data, &Curl_doh_trc)) {
         infof(data, "[DoH] Host name: %s", dohp->host);
@@ -1628,11 +1817,34 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
         return result;
       }
 
+      /* BEFORE locking the cache, process any build-specific
+         attributes retrieved from DNS */
+
+#ifdef USE_HTTPSRR
+      if(dep->numhttps_rrs > 0 && result == CURLE_OK) {
+        result = Curl_doh_decode_httpsrr(dep->https_rrs->val,
+                                         dep->https_rrs->len,
+                                         &hrr);
+        if(result) {
+          infof(data, "Failed to decode HTTPS RR");
+          return result;
+        }
+        infof(data, "Some HTTPS RR to process");
+# ifdef CURLDEBUG
+        local_print_httpsrr(data, hrr);
+# endif
+      }
+#endif
+
       if(data->share)
         Curl_share_lock(data, CURL_LOCK_DATA_DNS, CURL_LOCK_ACCESS_SINGLE);
 
       /* we got a response, store it in the cache */
       dns = Curl_cache_addr(data, ai, dohp->host, 0, dohp->port);
+#ifdef USE_HTTPSRR
+      if(dns)
+        dns->hinfo = hrr; /* attach HTTPS RR data while cache is locked */
+#endif
 
       if(data->share)
         Curl_share_unlock(data, CURL_LOCK_DATA_DNS);
@@ -1640,6 +1852,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
       if(!dns) {
         /* returned failure, bail out nicely */
         Curl_freeaddrinfo(ai);
+        /* TODO: free hrr also */
       }
       else {
         data->state.async.dns = dns;
@@ -1647,25 +1860,6 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
         result = CURLE_OK;      /* address resolution OK */
       }
     } /* address processing done */
-
-    /* Now process any build-specific attributes retrieved from DNS */
-#ifdef USE_HTTPSRR
-    if(dep->numhttps_rrs > 0 && result == CURLE_OK && *dnsp) {
-      struct Curl_https_rrinfo *hrr = NULL;
-      result = Curl_doh_decode_httpsrr(dep->https_rrs->val,
-                                       dep->https_rrs->len,
-                                       &hrr);
-      if(result) {
-        infof(data, "Failed to decode HTTPS RR");
-        return result;
-      }
-      infof(data, "Some HTTPS RR to process");
-# ifdef DEBUGBUILD
-      local_print_httpsrr(data, hrr);
-# endif
-      (*dnsp)->hinfo = hrr;
-    }
-#endif
 
     /* All done */
     de_cleanup(dep);
