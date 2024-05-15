@@ -1252,9 +1252,6 @@ static CURLcode doh2ai(
                 for(offset = 0; offset < plen; offset += 16) {
                   Curl_inet_ntop(AF_INET6, src + offset,
                                  abuf, INET6_ADDRSTRLEN);
-                  fprintf(stderr,
-                          "DEBUG: ipv6 address at %p: (%ld) %s\n",
-                          src + offset, strlen(abuf), abuf);
                   ss_size = sizeof(struct sockaddr_in6);
                   addrtype = AF_INET6;
                   ai = calloc(1, sizeof(struct Curl_addrinfo)
