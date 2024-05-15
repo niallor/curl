@@ -1398,7 +1398,7 @@ UNITTEST void de_cleanup(struct dohentry *d)
 #ifdef USE_HTTPSRR
   /* TODO: clean up map tables too */
   for(i = 0; i < d->numhttps_rrs; i++)
-    free(d->https_rrs[i].val);  /* TODO: confirm flavour of free() */
+    Curl_safefree(d->https_rrs[i].val);
   Curl_safefree(d->rrtab);
   Curl_safefree(d->rrstab);
 #endif
