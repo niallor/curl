@@ -38,7 +38,7 @@
 #include "connect.h"
 #include "strdup.h"
 #include "dynbuf.h"
-#include "inet_ntop.h"
+#include "inet_ntop.h"          /* WIP: added */
 /* The last 3 #include files should be in this order */
 #include "curl_printf.h"
 #include "curl_memory.h"
@@ -66,7 +66,7 @@ static const char * const errors[]={
   "No content",
   "Bad ID",
   "Name too long",
-  "Alias pending"
+  "Alias pending"               /* WIP: added */
 };
 
 static const char *doh_strerror(DOHcode code)
@@ -224,14 +224,14 @@ static int doh_done(struct Curl_easy *doh, CURLcode result)
   if(result)
     infof(doh, "DoH request %s", curl_easy_strerror(result));
 
-#ifndef USE_HTTPSRR             /* NOT DONE yet; allow for alias chasing */
+#ifndef USE_HTTPSRR             /* WIP: NOT DONE yet; allow alias chasing */
   if(!dohp->pending) {
     /* DoH completed */
     curl_slist_free_all(dohp->headers);
     dohp->headers = NULL;
     Curl_expire(data, 0, EXPIRE_RUN_NOW);
   }
-#endif
+#endif  /* not defined USE_HTTPSRR */
   return 0;
 }
 
@@ -408,8 +408,6 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
   struct dohdata *dohp;
   struct connectdata *conn = data->conn;
   *waitp = FALSE;
-  (void)hostname;
-  (void)port;
 
   DEBUGASSERT(!data->req.doh);
   DEBUGASSERT(conn);
@@ -428,7 +426,7 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
   if(!dohp->headers)
     goto error;
 
-  /* TODO: Allocate slots consecutively as needed instead of
+  /* WIP:  Allocate slots consecutively as needed instead of
    *       using dedicated slots. DEBUGASSERT is to protect
    *       against silliness during transition, and is to be
    *       removed in due course.
@@ -439,27 +437,27 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
    */
 
   /* create IPv4 DoH request */
-  DEBUGASSERT(dohp->inusect == DOH_PROBE_SLOT_IPADDR_V4);
+  DEBUGASSERT(dohp->inusect == DOH_PROBE_SLOT_IPADDR_V4); /* WIP: added */
   result = dohprobe(data, &dohp->probe[DOH_PROBE_SLOT_IPADDR_V4],
                     DNS_TYPE_A, hostname, data->set.str[STRING_DOH],
                     data->multi, dohp->headers);
   if(result)
     goto error;
-  dohp->probe[dohp->inusect].in_work = 1;
-  dohp->inusect++;
+  dohp->probe[dohp->inusect].in_work = 1; /* WIP: added */
+  dohp->inusect++;                        /* WIP: added */
   dohp->pending++;
 
 #ifdef USE_IPV6
   if((conn->ip_version != CURL_IPRESOLVE_V4) && Curl_ipv6works(data)) {
     /* create IPv6 DoH request */
-    DEBUGASSERT(dohp->inusect == DOH_PROBE_SLOT_IPADDR_V6);
+    DEBUGASSERT(dohp->inusect == DOH_PROBE_SLOT_IPADDR_V6); /* WIP: added */
     result = dohprobe(data, &dohp->probe[DOH_PROBE_SLOT_IPADDR_V6],
                       DNS_TYPE_AAAA, hostname, data->set.str[STRING_DOH],
                       data->multi, dohp->headers);
     if(result)
       goto error;
-    dohp->probe[dohp->inusect].in_work = 1;
-    dohp->inusect++;
+    dohp->probe[dohp->inusect].in_work = 1; /* WIP: added */
+    dohp->inusect++;                        /* WIP: added */
     dohp->pending++;
   }
 #endif
@@ -478,7 +476,7 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
 # ifdef USE_ECH
   if(data->set.tls_ech & CURLECH_ENABLE
      || data->set.tls_ech & CURLECH_HARD) {
-    char *qname = NULL;
+    char *qname = NULL;         /* WIP: moved here from top */
     if(port == 443)
       qname = strdup(hostname);
     else
@@ -489,11 +487,11 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
     result = dohprobe(data, &dohp->probe[DOH_PROBE_SLOT_HTTPS],
                       DNS_TYPE_HTTPS, qname, data->set.str[STRING_DOH],
                       data->multi, dohp->headers);
-    Curl_safefree(qname);
+    Curl_safefree(qname);       /* WIP: changed: s/free/Curl_safefree */
     if(result)
       goto error;
-    dohp->probe[dohp->inusect].in_work = 1;
-    dohp->inusect++;
+    dohp->probe[dohp->inusect].in_work = 1; /* WIP: added */
+    dohp->inusect++;                        /* WIP: added */
     dohp->pending++;
   }
 # endif
@@ -508,10 +506,8 @@ error:
     /* TODO: se non abbiamo mai utilizzato questo slot, continue */
     (void)curl_multi_remove_handle(data->multi, dohp->probe[slot].easy);
     Curl_close(&dohp->probe[slot].easy);
-    if(dohp->probe[slot].rrtab)
-      Curl_safefree(dohp->probe[slot].rrtab);
-    if(dohp->probe[slot].settab)
-      Curl_safefree(dohp->probe[slot].settab);
+    Curl_safefree(dohp->probe[slot].rrtab);  /* WIP: added */
+    Curl_safefree(dohp->probe[slot].settab); /* WIP: added */
   }
   Curl_safefree(data->req.doh);
   return NULL;
@@ -604,7 +600,7 @@ static DOHcode store_https(const unsigned char *doh,
 }
 #endif
 
-static DOHcode store_dnsname(const unsigned char *doh,
+static DOHcode store_dnsname(const unsigned char *doh, /* WIP: added */
                              size_t dohlen,
                              unsigned int index,
                              unsigned char *buf, size_t buflen)
@@ -785,18 +781,19 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
   unsigned short qdcount;
   unsigned short ancount;
   unsigned short type = 0;
-  unsigned short class;
-  unsigned int ttl;
   unsigned short rdlength;
   unsigned short nscount;
   unsigned short arcount;
+  /* WIP: added (8 LOC) */
+  unsigned short class;
+  unsigned int ttl;
   unsigned int rrtotal;         /* aggregate of section counts */
-  unsigned int index = 12;
   struct RRmap *rrmap, *thisrr;
   struct RRmap *prevrr = NULL;
   struct RRsetmap *rrsmap, *thisrrset;
   unsigned char *targname = NULL;
   int aliased = 0;
+  unsigned int index = 12;
   DOHcode rc;
 
   if(dohlen < 12)
@@ -807,6 +804,7 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
   if(rcode)
     return DOH_DNS_BAD_RCODE; /* bad rcode */
 
+  /* WIP: moved and/or added (8 LOC) */
   qdcount = get16bit(doh, 4);
   rrtotal = qdcount;
   ancount = get16bit(doh, 6);
@@ -816,19 +814,19 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
   arcount = get16bit(doh, 10);
   rrtotal += arcount;
 
+#ifdef USE_HTTPSRR              /* WIP: added */
+  /* Initialize map tables */
   rrmap = calloc(rrtotal, sizeof(struct RRmap));
   if(!rrmap)
     return DOH_OUT_OF_MEM;
   rrsmap = calloc(rrtotal, sizeof(struct RRsetmap));
   if(!rrsmap) {
-    if(rrmap)
-      Curl_safefree(rrmap);
+    Curl_safefree(rrmap);
     return DOH_OUT_OF_MEM;
   }
 
   thisrr = rrmap;
   thisrrset = rrsmap;
-#ifdef USE_HTTPSRR
   /* Maps and targname belong to current probe */
   d->probe->rrtab = rrmap;
   d->probe->settab = rrsmap;
@@ -836,10 +834,13 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
 #endif
 
   while(qdcount) {
+#ifdef USE_HTTPSRR              /* WIP: added */
     thisrr->base = index;
+#endif
     rc = skipqname(doh, dohlen, &index);
     if(rc)
       return rc; /* bad qname */
+#ifdef USE_HTTPSRR              /* WIP: added */
     thisrrset->count++;
     thisrr->name_len = index - thisrr->base;
     if(thisrr->name_len == 2) {
@@ -851,22 +852,32 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
       thisrr->name_ref = thisrr->base;
 
     thisrr->name_org = thisrr->name_ref; /* assume own name is original */
-
+#endif
     if(dohlen < (index + 4))
       return DOH_DNS_OUT_OF_RANGE;
     index += 4; /* skip question's type and class */
-    prevrr = thisrr++;
     qdcount--;
+#ifdef USE_HTTPSRR              /* WIP: added */
+    prevrr = thisrr++;
+#endif
   }
 
+#ifdef USE_HTTPSRR          /* WIP: added */
   /* Inter-section housekeeping */
   thisrrset++;                  /* Don't continue RRset to next section */
+#endif
 
   while(ancount) {
+    /* WIP: declaration of class moved from here to top of function */
+    /* WIP: declaration of ttl moved from here to top of function */
+#ifdef USE_HTTPSRR          /* WIP: added */
     thisrr->base = index;
+#endif
+
     rc = skipqname(doh, dohlen, &index);
     if(rc)
       return rc; /* bad qname */
+#ifdef USE_HTTPSRR          /* WIP: added */
     thisrrset->count++;
     thisrr->name_len = index - thisrr->base;
     if(thisrr->name_len == 2) {
@@ -889,6 +900,7 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
         thisrr->name_org = prevrr->name_org;
       }
     }
+#endif
 
     if(dohlen < (index + 2))    /* insufficient data for TYPE */
       return DOH_DNS_OUT_OF_RANGE;
@@ -925,10 +937,9 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
     if(dohlen < (index + rdlength)) /* insufficient data for RDATA */
       return DOH_DNS_OUT_OF_RANGE;
 
+#ifdef USE_HTTPSRR          /* WIP: added */
     /* Inspect RDATA, according to TYPE */
-
     switch(type) {
-#ifdef USE_HTTPSRR
     case DNS_TYPE_HTTPS:
       thisrr->priority = get16bit(doh, index);
       targname = d->probe->canonname;
@@ -938,27 +949,34 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
       if(!thisrr->priority)
         aliased = 1;
       break;
-#endif  /* defined USE_HTTPSRR */
     default:
       break;
     } /* switch(type) */
 
     if(!aliased) {              /* if aliased, don't save RDATA */
-      rc = rdata(doh, dohlen, rdlength, type, (int)index, d);
+#endif
+        rc = rdata(doh, dohlen, rdlength, type, (int)index, d);
       if(rc)
         return rc; /* bad rdata */
+#ifdef USE_HTTPSRR          /* WIP: added */
     }
-
+#endif
     index += rdlength;
-    prevrr = thisrr++;
     ancount--;
+#ifdef USE_HTTPSRR          /* WIP: added */
+    prevrr = thisrr++;
+#endif
   }
 
+#ifdef USE_HTTPSRR          /* WIP: added */
   /* Inter-section housekeeping */
   thisrrset++;                  /* Don't continue RRset to next section */
+#endif
 
   while(nscount) {
+#ifdef USE_HTTPSRR          /* WIP: added */
     thisrr->base = index;
+#endif
     rc = skipqname(doh, dohlen, &index);
     if(rc)
       return rc; /* bad qname */
@@ -976,15 +994,21 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
     if(dohlen < (index + rdlength))
       return DOH_DNS_OUT_OF_RANGE;
     index += rdlength;
-    prevrr = thisrr++;
+#ifdef USE_HTTPSRR          /* WIP: added */
     nscount--;
+#endif
+    prevrr = thisrr++;
   }
 
+#ifdef USE_HTTPSRR          /* WIP: added */
   /* Inter-section housekeeping */
   thisrrset++;                  /* Don't continue RRset to next section */
+#endif
 
   while(arcount) {
+#ifdef USE_HTTPSRR          /* WIP: added */
     thisrr->base = index;
+#endif
     rc = skipqname(doh, dohlen, &index);
     if(rc)
       return rc; /* bad qname */
@@ -1002,14 +1026,18 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
     if(dohlen < (index + rdlength))
       return DOH_DNS_OUT_OF_RANGE;
     index += rdlength;
-    prevrr = thisrr++;
     arcount--;
+#ifdef USE_HTTPSRR          /* WIP: added */
+    prevrr = thisrr++;
+#endif
   }
 
   if(index != dohlen)
     return DOH_DNS_MALFORMAT; /* something is wrong */
+#ifdef USE_HTTPSRR          /* WIP: added */
   if(aliased)
     return DOH_DNS_ALIAS_PENDING;
+#endif
 
 #ifdef USE_HTTPSRR
   if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr && !d->numhttps_rrs)
@@ -1086,6 +1114,7 @@ static void showdoh(struct Curl_easy *data,
  */
 
 static CURLcode doh2ai(
+                       /* WIP: paramlist reformatted, 'const' removed */
                        /* const */
                        struct dohentry *de,
                        const char *hostname,
@@ -1104,7 +1133,7 @@ static CURLcode doh2ai(
 
   DEBUGASSERT(de);
 
-  if(de->numaddr) {
+  if(de->numaddr) {             /* WIP: sense changed; code paths swapped */
     for(i = 0; i < de->numaddr; i++) {
       size_t ss_size;
       CURL_SA_FAMILY_T addrtype;
@@ -1180,7 +1209,7 @@ static CURLcode doh2ai(
       prevai = ai;
     }
   }
-#ifdef USE_HTTPSRR
+#ifdef USE_HTTPSRR              /* WIP: added */
   else if(de->numhttps_rrs) {
     /* [TODO] Use address hints, if any, from HTTPS RDATA items */
 
@@ -1278,7 +1307,7 @@ static CURLcode doh2ai(
                 }
               }
               else
-#endif
+#endif  /* defined USE_IPV6 */
                 if(pkey == 4) {
                   for(offset = 0; offset < plen; offset += 4) {
                     ss_size = sizeof(struct sockaddr_in);
@@ -1327,46 +1356,9 @@ static CURLcode doh2ai(
           }
         }
       }
-
-#ifdef READY_FOR_TESTING
-      for(a = 0; a < rrinfo->ipv4hints_len; a += 4) {
-        /* process an IPv4 address */
-        ss_size = sizeof(struct sockaddr_in);
-        addrtype = AF_INET;
-        ai = calloc(1, sizeof(struct Curl_addrinfo) + ss_size + hostlen);
-        if(!ai) {
-          result = CURLE_OUT_OF_MEMORY;
-          break;
-        }
-        ai->ai_addr = (void *)((char *)ai + sizeof(struct Curl_addrinfo));
-        ai->ai_canonname = (void *)((char *)ai->ai_addr + ss_size);
-        memcpy(ai->ai_canonname, hostname, hostlen);
-
-        if(!firstai)
-          /* store the pointer we want to return from this function */
-          firstai = ai;
-
-        if(prevai)
-          /* make the previous entry point to this */
-          prevai->ai_next = ai;
-
-        ai->ai_family = addrtype;
-
-        /* we return all names as STREAM, so when using this address for TFTP
-           the type must be ignored and conn->socktype be used instead! */
-        ai->ai_socktype = SOCK_STREAM;
-
-        ai->ai_addrlen = (curl_socklen_t)ss_size;
-        addr6 = (void *)ai->ai_addr; /* storage area for this info */
-        DEBUGASSERT(sizeof(struct in6_addr) == sizeof(de->addr[i].ip.v6));
-        memcpy(&addr6->sin6_addr, &de->addr[i].ip.v6, sizeof(struct in6_addr));
-        addr6->sin6_family = addrtype;
-        addr6->sin6_port = htons((unsigned short)port);
-      }
-#endif
     }                                       /* next HTTPS RR */
   }
-#endif
+#endif  /* defined USE_HTTPSRR */
   else
     return CURLE_COULDNT_RESOLVE_HOST;
 
@@ -1404,11 +1396,10 @@ UNITTEST void de_cleanup(struct dohentry *d)
     Curl_dyn_free(&d->cname[i]);
   }
 #ifdef USE_HTTPSRR
-  /* TODO: clean up map tables too */
   for(i = 0; i < d->numhttps_rrs; i++)
     Curl_safefree(d->https_rrs[i].val);
-  Curl_safefree(d->rrtab);
-  Curl_safefree(d->rrstab);
+  Curl_safefree(d->rrtab);      /* WIP: added */
+  Curl_safefree(d->rrstab);     /* WIP: added */
 #endif
 }
 
@@ -1680,11 +1671,11 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
   if(!dohp)
     return CURLE_OUT_OF_MEMORY;
 
-  for(slot = 0; slot < DOH_PROBE_SLOTS; slot++) {
-    if(dohp->probe[slot].easy)
-      break;
+  for(slot = 0; slot < DOH_PROBE_SLOTS; slot++) { /* scan slots */
+    if(dohp->probe[slot].easy)                    /* found active one */
+      break;                                      /* so can quit */
   }
-  if(slot == DOH_PROBE_SLOTS)
+  if(slot == DOH_PROBE_SLOTS)   /* no active slot */
   /* if(!dohp->probe[DOH_PROBE_SLOT_IPADDR_V4].easy && */
   /*    !dohp->probe[DOH_PROBE_SLOT_IPADDR_V6].easy) */
     {
