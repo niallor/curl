@@ -600,6 +600,7 @@ static DOHcode store_https(const unsigned char *doh,
 }
 #endif
 
+#ifdef USE_HTTPSRR              /* WIP: added */
 static DOHcode store_dnsname(const unsigned char *doh, /* WIP: added */
                              size_t dohlen,
                              unsigned int index,
@@ -658,6 +659,7 @@ static DOHcode store_dnsname(const unsigned char *doh, /* WIP: added */
   *c = '\0';
   return DOH_OK;
 }
+#endif
 
 static DOHcode store_cname(const unsigned char *doh,
                            size_t dohlen,
@@ -788,11 +790,13 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
   unsigned short class;
   unsigned int ttl;
   unsigned int rrtotal;         /* aggregate of section counts */
+#ifdef USE_HTTPSRR              /* WIP: added */
   struct RRmap *rrmap, *thisrr;
   struct RRmap *prevrr = NULL;
   struct RRsetmap *rrsmap, *thisrrset;
   unsigned char *targname = NULL;
   int aliased = 0;
+#endif  /* defined USE_HTTPSRR */
   unsigned int index = 12;
   DOHcode rc;
 
@@ -932,7 +936,9 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
       return DOH_DNS_OUT_OF_RANGE;
 
     rdlength = get16bit(doh, index);
+#ifdef USE_HTTPSRR              /* WIP: added */
     thisrr->rd_len = rdlength;
+#endif
     index += 2;                 /* advance past RDLEN */
     if(dohlen < (index + rdlength)) /* insufficient data for RDATA */
       return DOH_DNS_OUT_OF_RANGE;
@@ -994,10 +1000,10 @@ UNITTEST DOHcode doh_decode(const unsigned char *doh,
     if(dohlen < (index + rdlength))
       return DOH_DNS_OUT_OF_RANGE;
     index += rdlength;
-#ifdef USE_HTTPSRR          /* WIP: added */
     nscount--;
-#endif
+#ifdef USE_HTTPSRR          /* WIP: added */
     prevrr = thisrr++;
+#endif
   }
 
 #ifdef USE_HTTPSRR          /* WIP: added */
@@ -1260,6 +1266,9 @@ static CURLcode doh2ai(
                 for(offset = 0; offset < plen; offset += 16) {
                   Curl_inet_ntop(AF_INET6, src + offset,
                                  abuf, INET6_ADDRSTRLEN);
+                  fprintf(stderr,
+                          "DEBUG: ipv6 address at %p: (%ld) %s\n",
+                          src + offset, strlen(abuf), abuf);
                   ss_size = sizeof(struct sockaddr_in6);
                   addrtype = AF_INET6;
                   ai = calloc(1, sizeof(struct Curl_addrinfo)
@@ -1703,7 +1712,9 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
       if(!p->in_work)
         continue;               /* inactive or already decoded */
 
+#ifdef USE_HTTPSRR              /* WIP: added */
       dep->probe = p;           /* link current probe to dohentry */
+#endif
       infof(data, "DoH request slot %d: decoding response", slot);
       rc[slot] = doh_decode(Curl_dyn_uptr(&p->serverdoh),
                             Curl_dyn_len(&p->serverdoh),
