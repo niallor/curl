@@ -630,6 +630,14 @@ struct easy_pollset {
   unsigned char actions[MAX_SOCKSPEREASYHANDLE];
 };
 
+/* Note:
+ * According to RFC9460 section 4.2, recursive resolver SHOULD
+ * chase aliases, and place results in Additional Section of
+ * response. Pending availablity of this functionality, or
+ * in case resolver in use is deficient, client has to take
+ * care of this instead.
+ * */
+#define DOH_ALIAS_LIMIT 4 /* count of slots to allow for chasing aliases */
 enum doh_slots {
   /* Explicit values for first two symbols so as to match hard-coded
    * constants in existing code
@@ -640,6 +648,7 @@ enum doh_slots {
   /* Space here for (possibly build-specific) additional slot definitions */
 #ifdef USE_HTTPSRR
   DOH_PROBE_SLOT_HTTPS = 2,     /* for HTTPS RR */
+  DOH_PROBE_SLOT_LAST_ALIAS = DOH_PROBE_SLOT_HTTPS + DOH_ALIAS_LIMIT,
 #endif
 
   /* for example */
