@@ -28,6 +28,12 @@
 #include "curl_addrinfo.h"
 #ifdef USE_HTTPSRR
 # include <stdint.h>
+
+#define Curl_freehttpsrrinfo(x) if(x) { \
+    Curl_safefree((x)->target);         \
+    Curl_safefree((x)->echconfiglist);  \
+    Curl_safefree((x)->val); }          \
+  Curl_safefree(x)
 #endif
 
 #ifndef CURL_DISABLE_DOH
@@ -71,6 +77,7 @@ struct RRmap {       /* Note: all offsets are from start of message */
   unsigned int ttl;
   unsigned int rd_len;   /* length of rdata */
   unsigned int rd_ref;   /* offset to rdata */
+  unsigned int tg_len;   /* length of target in rdata (if defined) */
   unsigned int priority; /* priority/preference (if defined) */
 };
 
@@ -97,6 +104,7 @@ struct dnsprobe {
   unsigned char qname[256];     /* DNS QNAME, if prefixed or aliased */
   unsigned char canonname[256]; /* target of CNAME or AliasMode */
   unsigned int in_work;         /* active, not yet decoded */
+  unsigned int rrcount;         /* count of entries in following tables */
   struct RRmap *rrtab;          /* table of RRs in response */
   struct RRsetmap *settab;      /* table of RRsets in response */
 };
@@ -148,9 +156,19 @@ struct dohaddr {
 #define COMMA_CHAR                    ','
 #define BACKSLASH_CHAR                '\\'
 
+struct dohsvcpmap {             /* map of SvcParam data */
+  unsigned short key;
+  unsigned short dlen;
+};
+
 struct dohhttps_rr {
-  uint16_t len; /* raw encoded length */
-  unsigned char *val; /* raw encoded octets */
+  uint16_t len;             /* raw encoded length */
+  unsigned char *val;       /* raw encoded octets */
+  unsigned int targlen;     /* length of target field (on wire) */
+  /*
+   * unsigned short svcpcount;
+   * struct dohsvcpmap *svcpmap;
+   */
 };
 #endif
 
