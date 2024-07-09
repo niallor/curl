@@ -65,18 +65,17 @@ typedef enum {
   DNS_TYPE_HTTPS = 65
 } DNStype;
 
-
 /* struct:s RRmap, RRsetmap describe inter-RR dependencies */
 struct RRmap {       /* Note: all offsets are from start of message */
-  unsigned int base;     /* offset to RR */
-  unsigned int name_len; /* length of name (perhaps a pointer) */
+  unsigned int base;     /* position of RR in buffer */
+  unsigned int name_len; /* length of name in buffer */
   unsigned int name_ref; /* offset to referenced name */
   unsigned int name_org; /* offset to "original" name */
   unsigned int type;
   unsigned int class;
   unsigned int ttl;
   unsigned int rd_len;   /* length of rdata */
-  unsigned int rd_ref;   /* offset to rdata */
+  unsigned int rd_ref;   /* position of RDATA in buffer */
   unsigned int tg_len;   /* length of target in rdata (if defined) */
   unsigned int priority; /* priority/preference (if defined) */
 };
@@ -104,6 +103,7 @@ struct dnsprobe {
   unsigned char qname[256];     /* DNS QNAME, if prefixed or aliased */
   unsigned char canonname[256]; /* target of CNAME or AliasMode */
   unsigned int in_work;         /* active, not yet decoded */
+  unsigned int qdcount;         /* count of RRs in Question section */
   unsigned int rrcount;         /* count of entries in following tables */
   struct RRmap *rrtab;          /* table of RRs in response */
   struct RRsetmap *settab;      /* table of RRsets in response */
@@ -175,15 +175,15 @@ struct dohhttps_rr {
 struct dohentry {
   struct dynbuf cname[DOH_MAX_CNAME];
   struct dohaddr addr[DOH_MAX_ADDR];
-  struct dynbuf targname;
+  /* struct dynbuf targname; */
   int numaddr;
   unsigned int ttl;
   int numcname;
 #ifdef USE_HTTPSRR
   struct dohhttps_rr https_rrs[DOH_MAX_HTTPS];
   int numhttps_rrs;
-  struct RRmap *rrtab;          /* allocated map of RRs in response */
-  struct RRsetmap *rrstab;      /* allocated map of RRsets in response */
+  /* struct RRmap *rrtab;          /\* allocated map of RRs in response *\/ */
+  /* struct RRsetmap *rrstab;      /\* allocated map of RRsets in response *\/ */
   struct dnsprobe *probe;       /* reference to current probe object */
 #endif
 };
