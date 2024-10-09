@@ -32,7 +32,10 @@
 #define Curl_freehttpsrrinfo(x) if(x) { \
     Curl_safefree((x)->target);         \
     Curl_safefree((x)->echconfiglist);  \
-    Curl_safefree((x)->val); }          \
+    Curl_safefree((x)->val);            \
+    Curl_safefree((x)->alpns);          \
+    Curl_safefree((x)->ipv4hints);      \
+    Curl_safefree((x)->ipv6hints); }    \
   Curl_safefree(x)
 #endif
 
