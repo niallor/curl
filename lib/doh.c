@@ -1690,15 +1690,22 @@ static CURLcode doh_test_alpn_escapes(void)
   };
   size_t example_len = sizeof(example);
   char *aval = NULL;
+  CURLcode rc = CURLE_OK;
   static const char *expected = "f\\\\oo\\,bar,h2";
 
-  if(doh_decode_rdata_alpn(example, example_len, &aval) != CURLE_OK)
-    return CURLE_BAD_CONTENT_ENCODING;
-  if(strlen(aval) != strlen(expected))
-    return CURLE_BAD_CONTENT_ENCODING;
-  if(memcmp(aval, expected, strlen(aval)))
-    return CURLE_BAD_CONTENT_ENCODING;
-  return CURLE_OK;
+  /* if(doh_decode_rdata_alpn(example, example_len, &aval) != CURLE_OK) */
+  /*   rc = CURLE_BAD_CONTENT_ENCODING; */
+  /* else if(strlen(aval) != strlen(expected)) */
+  /*   rc = CURLE_BAD_CONTENT_ENCODING; */
+  /* else if(memcmp(aval, expected, strlen(aval))) */
+  /*   rc = CURLE_BAD_CONTENT_ENCODING; */
+
+  if((doh_decode_rdata_alpn(example, example_len, &aval) != CURLE_OK)
+     || (strlen(aval) != strlen(expected))
+     || (memcmp(aval, expected, strlen(aval))))
+    rc = CURLE_BAD_CONTENT_ENCODING;
+  Curl_safefree(aval);
+  return rc;
 }
 #endif
 
@@ -1776,13 +1783,14 @@ static CURLcode doh_resp_decode_httpsrr(unsigned char *rrval, size_t len,
   *hrr = lhrr;
   return CURLE_OK;
 err:
-  if(lhrr) {
-    Curl_safefree(lhrr->target);
-    Curl_safefree(lhrr->echconfiglist);
-    Curl_safefree(lhrr->val);
-    Curl_safefree(lhrr->alpns);
-    Curl_safefree(lhrr);
-  }
+  Curl_freehttpsrrinfo(lhrr);
+  /* if(lhrr) { */
+  /*   Curl_safefree(lhrr->target); */
+  /*   Curl_safefree(lhrr->echconfiglist); */
+  /*   Curl_safefree(lhrr->val); */
+  /*   Curl_safefree(lhrr->alpns); */
+  /*   Curl_safefree(lhrr); */
+  /* } */
   return CURLE_OUT_OF_MEMORY;
 }
 
