@@ -496,10 +496,10 @@ struct Curl_addrinfo *Curl_doh(struct Curl_easy *data,
     if(result)
       goto error;
     dohp->probe[dohp->inusect].in_work = 1;
-    dohp->inusect++;
     dohp->pending++;
   }
 #endif
+  dohp->inusect++;              /* WIP: advance past DOH_SLOT-IPV6 */
 
 #ifdef USE_HTTPSRR
   /*
@@ -1868,10 +1868,6 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
   }
   else if(!dohp->pending) {
     DOHcode rc[DOH_SLOT_COUNT];
-    /*
-    struct dohentry de;
-    int slot;
-    */
     struct dohentry *dep = &dohp->de;
     struct doh_probe *p, *q;
 
@@ -1880,10 +1876,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
     Curl_doh_close(data);       /* Note: no need to loop through slots */
     /* parse the responses, create the struct and return it! */
     de_init(dep);
-    for(slot = 0; slot < DOH_SLOT_COUNT; slot++) {
-      /* struct doh_probe *p = &dohp->probe[slot]; */
-      /* if(!p->dnstype) */
-      /*   continue; */
+    for(slot = 0; slot < dohp->inusect; slot++) {
       p = &dohp->probe[slot];
       if(!p->in_work)           /* inactive or already decoded */
         continue;
@@ -1892,8 +1885,6 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
 #endif
       rc[slot] = doh_resp_decode(Curl_dyn_uptr(&p->resp_body),
                                  Curl_dyn_len(&p->resp_body),
-      /*                            p->dnstype, &de); */
-      /* Curl_dyn_free(&p->resp_body); */
                                  p->dnstype, dep);
 
       p->status = rc[slot];     /* save rc as slot status */
@@ -1954,7 +1945,6 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
       }
 #endif
 
-      /* TODO: consider whether to add more infof() calls here */
     } /* next slot */
 
 #ifdef USE_HTTPSRR
@@ -1993,6 +1983,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
         /*     Curl_safefree(dohp->probe[slot].settab); */
         /* } */
         /* Curl_safefree(data->req.doh); */
+        Curl_doh_cleanup(data); /* This might be all we need */
         return result;
       }
       dohp->pending++;
@@ -2089,19 +2080,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
                             data->multi, dohp->req_hds);
 
           if(result) {
-            /* NOTE: code block copied from Curl_addrinfo() */
-            curl_slist_free_all(dohp->req_hds);
-            data->req.doh->req_hds = NULL;
-            for(slot = 0; slot < DOH_SLOT_COUNT; slot++) {
-              /* (void)curl_multi_remove_handle(data->multi, */
-              /*                                dohp->probe[slot].easy_mid); */
-              /* Curl_close(&dohp->probe[slot].easy_mid); */
-              if(dohp->probe[slot].rrtab)
-                Curl_safefree(dohp->probe[slot].rrtab);
-              if(dohp->probe[slot].settab)
-                Curl_safefree(dohp->probe[slot].settab);
-            }
-            Curl_safefree(data->req.doh);
+            Curl_doh_cleanup(data); /* See above */
             return result;
           }
 
@@ -2130,19 +2109,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
                           data->set.str[STRING_DOH],
                           data->multi, dohp->req_hds);
         if(result) {
-          /* NOTE: code block copied from Curl_addrinfo() */
-          curl_slist_free_all(dohp->req_hds);
-          data->req.doh->req_hds = NULL;
-          for(slot = 0; slot < DOH_SLOT_COUNT; slot++) {
-            /* (void)curl_multi_remove_handle(data->multi, */
-            /*                                dohp->probe[slot].easy_mid); */
-            /* Curl_close(&dohp->probe[slot].easy_mid); */
-            if(dohp->probe[slot].rrtab)
-              Curl_safefree(dohp->probe[slot].rrtab);
-            if(dohp->probe[slot].settab)
-              Curl_safefree(dohp->probe[slot].settab);
-          }
-          Curl_safefree(data->req.doh);
+          Curl_doh_cleanup(data); /* See above */
           return result;
         }
         dohp->pending++;
@@ -2188,6 +2155,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
                                          &hrr);
         if(result) {
           infof(data, "Failed to decode HTTPS RR");
+          de_cleanup(dep);
           return result;
         }
         infof(data, "Some HTTPS RR to process");
@@ -2222,7 +2190,7 @@ CURLcode Curl_doh_is_resolved(struct Curl_easy *data,
       }
     } /* address processing done */
 
-    /* Already done before locking cache -- suyppr3ess here */
+    /* Already done before locking cache -- suppress here */
     /* Now process any build-specific attributes retrieved from DNS */
     /* #ifdef USE_HTTPSRR */
     /*     if(dep->numhttps_rrs > 0 && result == CURLE_OK && *dnsp) { */
@@ -2261,6 +2229,10 @@ void Curl_doh_close(struct Curl_easy *data)
     curl_off_t mid;
     size_t slot;
     for(slot = 0; slot < DOH_SLOT_COUNT; slot++) {
+#ifdef USE_HTTPSRR
+      Curl_safefree(doh->probe[slot].rrtab);
+      Curl_safefree(doh->probe[slot].settab);
+#endif
       mid = doh->probe[slot].easy_mid;
       if(mid < 0)
         continue;
