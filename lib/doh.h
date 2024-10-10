@@ -250,12 +250,14 @@ struct dohentry {
 struct doh_probes {
   struct curl_slist *req_hds;
   struct doh_probe probe[DOH_SLOT_COUNT];
-  struct dohentry de;           /* Preserve state between passes */
   unsigned int pending;         /* still outstanding requests */
-  unsigned int inusect;         /* slots in use == index of next free slot */
-  struct doh_probe *follow;      /* reference to probe with alias pending */
   int port;
   const char *host;
+#ifdef USE_HTTPSRR
+  unsigned int inusect;         /* slots in use == index of next free slot */
+  struct doh_probe *follow;      /* reference to probe with alias pending */
+  struct dohentry de;           /* Preserve state between passes */
+#endif
 };
 
 void Curl_doh_close(struct Curl_easy *data);
