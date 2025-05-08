@@ -764,122 +764,286 @@ UNITTEST DOHcode doh_resp_decode(const unsigned char *doh,
     return DOH_DNS_BAD_RCODE; /* bad rcode */
 
   qdcount = doh_get16bit(doh, 4);
-  while(qdcount) {
-    rc = doh_skipqname(doh, dohlen, &index);
-    if(rc)
-      return rc; /* bad qname */
-    if(dohlen < (index + 4))
-      return DOH_DNS_OUT_OF_RANGE;
-    index += 4; /* skip question's type and class */
-    qdcount--;
-  }
-
   ancount = doh_get16bit(doh, 6);
-  while(ancount) {
-    unsigned short class;
-    unsigned int ttl;
-
-    rc = doh_skipqname(doh, dohlen, &index);
-    if(rc)
-      return rc; /* bad qname */
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    type = doh_get16bit(doh, index);
-    if((type != DNS_TYPE_CNAME)    /* may be synthesized from DNAME */
-       && (type != DNS_TYPE_DNAME) /* if present, accept and ignore */
-       && (type != dnstype))
-      /* Not the same type as was asked for nor CNAME nor DNAME */
-      return DOH_DNS_UNEXPECTED_TYPE;
-    index += 2;
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-    class = doh_get16bit(doh, index);
-    if(DNS_CLASS_IN != class)
-      return DOH_DNS_UNEXPECTED_CLASS; /* unsupported */
-    index += 2;
-
-    if(dohlen < (index + 4))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    ttl = doh_get32bit(doh, index);
-    if(ttl < d->ttl)
-      d->ttl = ttl;
-    index += 4;
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    rdlength = doh_get16bit(doh, index);
-    index += 2;
-    if(dohlen < (index + rdlength))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    rc = doh_rdata(doh, dohlen, rdlength, type, (int)index, d);
-    if(rc)
-      return rc; /* bad doh_rdata */
-    index += rdlength;
-    ancount--;
-  }
-
   nscount = doh_get16bit(doh, 8);
-  while(nscount) {
-    rc = doh_skipqname(doh, dohlen, &index);
-    if(rc)
-      return rc; /* bad qname */
-
-    if(dohlen < (index + 8))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    index += 2 + 2 + 4; /* type, class and ttl */
-
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
-
-    rdlength = doh_get16bit(doh, index);
-    index += 2;
-    if(dohlen < (index + rdlength))
-      return DOH_DNS_OUT_OF_RANGE;
-    index += rdlength;
-    nscount--;
-  }
-
   arcount = doh_get16bit(doh, 10);
-  while(arcount) {
-    rc = doh_skipqname(doh, dohlen, &index);
-    if(rc)
-      return rc; /* bad qname */
 
-    if(dohlen < (index + 8))
-      return DOH_DNS_OUT_OF_RANGE;
+  if(qdcount != 1)
+    return DOH_DNS_MALFORMAT; /* we need a question, but only one (RFC9619) */
+  else {
+    unsigned int rrindex = 0;
+    unsigned int rrset = 0;
+    unsigned int rrcount = qdcount + ancount + nscount + arcount;
+    unsigned short count;
+    struct RRentry {      /* all offsets are from start of response buffer */
+      unsigned int rrpos;       /* offset to this RR (>= 12, or 0 for unset) */
+      unsigned int namepos;     /* offset to NAME, after following pointers */
+      unsigned int rdatapos;    /* offset to RDATA (as length of NAME varies */
+      unsigned short type;      /* TYPE of this RR */
+      unsigned int ttl;         /* TTL of this RR */
+      unsigned short rdatalen;  /* length of RDATA */
+      unsigned int rrset;       /* index of first RRentry in current RRset */
+    };
+    struct RRentry *rrmap = calloc(rrcount, sizeof(struct RRentry));
+    struct RRentry *rrent = rrmap;
+    if(!rrmap)
+      return DOH_OUT_OF_MEM;
 
-    index += 2 + 2 + 4; /* type, class and ttl */
+    while(qdcount) {
+      rrent->rrpos = index;     /* this RR is here */
+      rrent->namepos = index;   /* so is its name (QNAME not compressed) */
+      rc = doh_skipqname(doh, dohlen, &index);
+      if(rc)
+        goto cleanup; /* bad qname */
+      if(dohlen < (index + 4)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+      rrent->type = doh_get16bit(doh, index);
+      index += 4; /* skip question's type and class */
 
-    if(dohlen < (index + 2))
-      return DOH_DNS_OUT_OF_RANGE;
+      /* Post-RR housekeeping  */
+      rrindex++;
+      rrent++;
+      qdcount--;
+    }
 
-    rdlength = doh_get16bit(doh, index);
-    index += 2;
-    if(dohlen < (index + rdlength))
-      return DOH_DNS_OUT_OF_RANGE;
-    index += rdlength;
-    arcount--;
+    /* Post-section housekeeping */
+    rrset = rrindex;            /* Fresh RRset for next section */
+
+    count = ancount;            /* Keep ancount for later */
+    while(count) {              /* Process each RR in this section */
+      unsigned short class;
+      unsigned int ttl;
+
+      rrent->rrpos = index;     /* this RR is here */
+      rrent->namepos = index;   /* WIP: work out where name actually is */
+      rc = doh_skipqname(doh, dohlen, &index);
+      if(rc)
+        return rc; /* bad qname */
+
+      if(dohlen < (index + 2)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+
+      type = doh_get16bit(doh, index);
+      if((type != DNS_TYPE_CNAME)    /* may be synthesized from DNAME */
+         && (type != DNS_TYPE_DNAME) /* if present, accept and ignore */
+         && (type != dnstype)) {
+        /* Not the same type as was asked for nor CNAME nor DNAME */
+        rc = DOH_DNS_UNEXPECTED_TYPE;
+        goto cleanup;
+      }
+      rrent->type = type;
+      index += 2;
+
+      if(dohlen < (index + 2))
+        return DOH_DNS_OUT_OF_RANGE;
+      class = doh_get16bit(doh, index);
+      if(DNS_CLASS_IN != class) {
+        rc = DOH_DNS_UNEXPECTED_CLASS; /* unsupported */
+        goto cleanup;
+      }
+      index += 2;
+
+      if(dohlen < (index + 4)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+
+      ttl = doh_get32bit(doh, index);
+      rrent->ttl = ttl;
+      if(ttl < d->ttl)
+        d->ttl = ttl;
+      index += 4;
+
+      if(dohlen < (index + 2)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+
+      rdlength = doh_get16bit(doh, index);
+      index += 2;
+      if(dohlen < (index + rdlength)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+      rrent->rdatalen = rdlength;
+      rrent->rdatapos = index;
+
+      /* Defer saving RDATA, as RRset may need sorting */
+      /* rc = doh_rdata(doh, dohlen, rdlength, type, (int)index, d); */
+      /* if(rc) */
+      /*   goto cleanup; /\* bad doh_rdata *\/ */
+
+      if(rrindex == rrset) {
+        rrent->rrset = rrset;   /* first RR in empty RRset */
+      }
+      else if(rrent->namepos == (rrmap + rrset)->namepos
+              && rrent->type == (rrmap + rrset)->type) {
+        rrent->rrset = rrset;   /* next RR in same RRset */
+      }
+      else {
+        /* Before starting new RRset, sort and save current one */
+        int rrs = 1 + rrindex - rrset; /* count of RRs to deal with */
+        struct RRentry *rr = rrmap + rrset;    /* current RRentry */
+
+        /* WIP: sort the RRset */
+
+        while(rrs--) {          /* save each RR */
+          rc = doh_rdata(doh, dohlen, rr->rdatalen, type, rr->rdatapos, d);
+          if(rc)
+            goto cleanup;     /* bad doh_rdata */
+          rr++;
+        }
+        rrset = rrindex;      /* new RRset starts with this RR */
+        rrent->rrset = rrset;
+      }
+
+      /* Post-RR housekeeping */
+      rrindex++;
+      rrent++;
+      index += rdlength;
+      count--;
+
+      if(!count) { /* count exhausted: end-of-section housekeeping */
+        /* Sort, and save, final RRset of ANSWER section */
+        int rrs = rrindex - rrset; /* count of RRs to deal with */
+        struct RRentry *rr = rrmap + rrset; /* current RRentry */
+
+        /* WIP: sort the RRset */
+
+        while(rrs--) {          /* save RDATA for each RR in RRset */
+          rc = doh_rdata(doh, dohlen, rr->rdatalen, type, rr->rdatapos, d);
+          if(rc)
+            goto cleanup;       /* bad doh_rdata */
+          rr++;
+        }
+        rrset = rrindex;        /* fresh RRset for next section */
+      }                         /* housekeeping done */
+    }                           /* ANSWER section done */
+
+    while(nscount) {
+      /* NOTE:
+       *   There is nothing we can use in the AUTHORITY section,
+       *   so we skip all RRmap, RRset housekeeping.
+       */
+
+      if(dohlen < (index + 8)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+
+      index += 2 + 2 + 4; /* type, class and ttl */
+
+      if(dohlen < (index + 2)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+
+      rdlength = doh_get16bit(doh, index);
+      index += 2;
+      if(dohlen < (index + rdlength)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+      index += rdlength;
+      nscount--;
+    }
+
+    count = arcount;            /* Keep arcount for later */
+    while(count) {              /* Process each RR in this section */
+
+      /* NOTE:
+       *   The ADDITIONAL section may contain either
+       *   - the OPT pseudosection (with extended error codes), or
+       *   - supplementary data (e.g. as specified in RFC9460 (SVCB/HTTPS)),
+       *   - or both,
+       *   so it's worth the same attention as the ANSWER section
+       */
+
+      unsigned int ttl;
+
+      rrent->rrpos = index;     /* this RR is here */
+      rrent->namepos = index;   /* WIP: work out where name actually is */
+      rc = doh_skipqname(doh, dohlen, &index);
+      if(rc)
+        return rc; /* bad qname */
+
+      if(dohlen < (index + 8)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+
+      type = doh_get16bit(doh, index);
+      rrent->type = type;
+      ttl = doh_get32bit(doh, index + 4);
+      rrent->ttl = ttl;
+
+      index += 2 + 2 + 4; /* type, class and ttl */
+
+      if(dohlen < (index + 2)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+
+      rdlength = doh_get16bit(doh, index);
+      index += 2;
+      if(dohlen < (index + rdlength)) {
+        rc = DOH_DNS_OUT_OF_RANGE;
+        goto cleanup;
+      }
+      rrent->rdatapos = index;
+
+      if(rrindex == rrset) {
+        rrent->rrset = rrset;   /* first RR in empty RRset */
+      }
+      else if(rrent->namepos == (rrmap + rrset)->namepos
+              && rrent->type == (rrmap + rrset)->type) {
+        rrent->rrset = rrset;   /* next RR in same RRset */
+      }
+      else {
+        /* Defer processing until end of section */
+        rrset = rrindex;        /* new RRset starts with this RR */
+        rrent->rrset = rrset;
+      }
+
+      rrindex++;
+      rrent++;
+      index += rdlength;
+      arcount--;
+
+      if(!count) {
+        /* WIP: test for need to process any RRset of ADDITIONAL section */
+        /* WIP: if needed, process each RRset in this section appropriately */
+
+        /* Note: no next section, so no need for a fresh RRset */
+      }
+
+    } /* ADDITIONAL section done */
+
+    if(index != dohlen) {       /* residue in buffer? */
+      rc = DOH_DNS_MALFORMAT;   /* yes: something is wrong */
+      goto cleanup;
+    }
+
+cleanup:
+    Curl_safefree(rrmap);
   }
 
-  if(index != dohlen)
-    return DOH_DNS_MALFORMAT; /* something is wrong */
-
+  if(!rc) {
 #ifdef USE_HTTTPS
-  if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr && !d->numhttps_rrs)
+    if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr
+       && !d->numhttps_rrs)
 #else
-  if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr)
+    if((type != DNS_TYPE_NS) && !d->numcname && !d->numaddr)
 #endif
-    /* nothing stored! */
-    return DOH_NO_CONTENT;
+      /* nothing stored! */
+      rc = DOH_NO_CONTENT;
+  }
 
-  return DOH_OK; /* ok */
+  return rc;
 }
 
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
